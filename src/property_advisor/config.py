@@ -31,6 +31,11 @@ LANGCHAIN_PROJECT = LANGSMITH_PROJECT
 RISK_HUMAN_REVIEW_THRESHOLD = float(os.getenv("RISK_HUMAN_REVIEW_THRESHOLD", "75"))
 GUARDRAIL_CONFIDENCE_THRESHOLD = float(os.getenv("GUARDRAIL_CONFIDENCE_THRESHOLD", "0.70"))
 
+# RAG retrieval: character-based chunking and number of chunks returned per query.
+RAG_CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "800"))
+RAG_CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "100"))
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
+
 MAX_DATA_RETRIES = int(os.getenv("MAX_DATA_RETRIES", "2"))
 MAX_REANALYSIS_RETRIES = int(os.getenv("MAX_REANALYSIS_RETRIES", "2"))
 

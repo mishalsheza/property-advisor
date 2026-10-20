@@ -19,10 +19,10 @@ with open(_DATA_PATH) as f:
 
 def get_market_data(city: str, locality: str | None = None, slug: str | None = None) -> dict[str, Any]:
     """Look up market trend data, preferring an exact locality_slug match
-    (carried over from the Property Agent) and falling back to city/locality
+    (carried over from the address-parsing step) and falling back to city/locality
     text matching. Returns {} when no data is available, e.g. for Tier-3
     cities not covered by the mock dataset — this signals missing data to
-    the calling agent and drives the missing-data retry routing.
+    the calling step and drives the missing-data retry routing.
     """
     if slug and slug in _MARKET_TRENDS:
         return dict(_MARKET_TRENDS[slug])

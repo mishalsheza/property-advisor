@@ -1,0 +1,29 @@
+Income from House Property — Income Tax Department, Government of India (incometaxindia.gov.in tax reckoner pages), last updated May 27, 2026.
+
+Computation of Income from House Property Income from house property is computed by determining the annual value of the property and allowing deductions such as municipal taxes, standard deduction, and housing loan interest. Properties are categorized as let-out, self-occupied, or deemed let-out.
+
+Computation Process a. Categories: Let-Out Property: Annual value is based on the higher of expected rent or actual rent received. Self-Occupied Property: Annual value is nil; deductions allowed only for housing loan interest (up to Rs. 2,00,000). Deemed Let-Out Property: Annual value is computed based on expected rent. b. Annual Value Determination: Factors include municipal value, fair rent, standard rent (if Rent Control Act applies), and actual rent received or receivable. For vacant properties, actual rent may be deemed as annual value if it is lower than the expected rent due to vacancy. Rent which an owner cannot realise from his tenant (i.e., unrealised rent) is allowed to be deducted from actual rent. c. Deductions: Municipal Taxes: Deducted if the owner pays during the relevant year. Standard Deduction: 30% of net annual value (i.e., Annual value minus Municipal Tax). Interest on Home Loan: Full interest for let-out properties; limited to Rs. 30000 or Rs. 2,00,000, as the case may be, for self-occupied properties.
+
+Special Scenarios
+
+Self-occupied house property: If the property is self-occupied by the owner or cannot be occupied by him for any reason, it is treated as self-occupied property. The annual value of any two of such properties can be considered nil. Co-ownership: Income is apportioned based on definite shares, with each co-owner entitled to deductions. Stock-in-Trade: Annual value is considered ‘nil’ for up to two years post-construction.
+
+Tax Treatment of Losses
+
+Loss under this head (up to Rs. 2,00,000) can be set off against other heads of income. Unabsorbed losses are carried forward for 8 years. The loss under the head house property can be carried forward even if the Income-tax return is filed after the due date. If the assessee opted for the default tax regime under section 115BAC. In that case, his total income shall be computed without allowing any loss under the head “Income from house property” to be set off against income from other heads.
+
+Recovery of Unrealized Rent
+
+Arrears or unrealized rent recovered later is taxable in the year of receipt, with a 30% deduction allowed.
+
+Interest on Housing Loan Interest paid or payable on borrowed capital for the purchase, construction, repair, or renovation of a house property is deductible under section 24(b) from the income taxable under the head "Income from House Property." The quantum of deduction depends on the use of the property (let-out, self-occupied, or deemed let-out).
+
+Quantum of Deduction
+
+a. Let-Out or Deemed Let-Out Properties: Full deduction for interest paid or payable, even if it exceeds the property’s annual value. b. Self-Occupied Properties: Deduction is limited to: Rs. 30,000: For loans taken for repair, renovation, or if conditions for a higher limit are not met. Rs. 2,00,000: For loans taken on or after April 1, 1999, for purchase or construction, if the property is completed within 5 years of borrowing.
+
+Pre-Construction Period Interest Interest for the period before acquisition or construction completion is deductible in 5 annual instalments starting from the year of completion. The pre-construction period ends on March 31 preceding the year of property acquisition/construction completion or the repayment of loan whichever is earlier.
+
+Other Provisions
+
+No interest deduction under the default tax regime: Under the default tax regime of section 115BAC , the interest deduction under section 24(b) for a self-occupied house property is not allowed. Deduction on Accrual Basis: Interest is deductible on an accrual basis. Thus, deduction can be claimed even if it is unpaid during the year. Interest on Re-Finance: Deduction applies to interest on loans taken to repay original housing loans. [Circular No. 28, Dated 20-08-1969] Interest Payable Abroad: Deduction is allowed only if the tax on such interest is deducted at source and paid to the Indian Government. Interest on House Building Advance: Interest on house building advance taken by Government employees under House Building Advance Rules, is allowed to be deducted on accrual basis. [Circular No. 363, Dated 24-06-1983] No deduction for ancillary expenses: Deduction is not allowed for penal interest, ancillary expenses like processing fees, brokerage, or commission.

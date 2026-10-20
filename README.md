@@ -1,9 +1,9 @@
 # Property AI - Indian Property Investment Advisor
 
 A LangGraph-based property investment advisor for the Indian real estate market.
-Given a property address, INR budget, horizon, and strategy, it produces a grounded
-BUY / HOLD / AVOID recommendation, routes it through guardrails, and requires human
-approval before generating reports.
+Given a property address, INR budget, horizon, strategy and loan terms, it produces a
+BUY / HOLD / AVOID recommendation, checks every cited figure against the computed data,
+and requires human approval before generating reports.
 
 Ships with:
 
@@ -13,230 +13,120 @@ Ships with:
 
 All entry points use the same LangGraph workflow.
 
+> **Demo data.** The 35 properties and 34 market/risk localities in
+> `src/property_advisor/data/mock_*.json` are **synthetic** — made up to exercise the demo
+> scenarios, not taken from any listing or survey. Recommendations are only as good as that
+> data; do not use them for real investment decisions.
+
 ## Architecture
 
-The graph has seven agents over a shared `PropertyState`:
+The graph has **one LLM agent** (the Recommendation Agent, Groq) and **six deterministic
+steps**, plus three control nodes (retry counter, human review, final report). Everything
+except the Recommendation Agent is plain Python: no LLM decides routing, computes numbers
+or checks claims.
 
 ```mermaid
 graph TD;
 	__start__([start]):::first
-	property_agent(1. Property Analysis Agent)
-	market_agent(2. Market Trends Agent)
+	parse_address_step(1. Address parsing — step)
+	market_lookup_step(2. Market lookup — step)
 	data_retry_increment(retry gate)
-	rag_agent(3. RAG Research Agent)
-	investment_metrics_agent(4. Investment Metrics Agent)
-	risk_assessment_agent(5. Risk Assessment Agent)
-	recommendation_agent(6. Recommendation Agent — LLM)
-	guardrail_agent(7. Guardrail Agent — checks + LLM)
+	rag_retrieval_step(3. RAG retrieval — step)
+	financial_calc_step(4. Financial calculation — step)
+	risk_scoring_step(5. Risk scoring — step)
+	recommendation_agent(Recommendation Agent — LLM)
+	guardrail_step(6. Guardrail — step)
 	human_review(Human Approval — interrupt)
 	final_report(Final Report)
 	__end__([end]):::last
 
-	__start__ --> property_agent --> market_agent
-	market_agent -. data missing, retries left .-> data_retry_increment --> property_agent
-	market_agent -. data ok / retries exhausted .-> rag_agent
-	rag_agent --> investment_metrics_agent --> risk_assessment_agent --> recommendation_agent
-	recommendation_agent --> guardrail_agent
-	guardrail_agent -. unsupported claims, capped retries .-> recommendation_agent
-	guardrail_agent -. no valid decision .-> final_report
-	guardrail_agent -. human_review_required .-> human_review
+	__start__ --> parse_address_step --> market_lookup_step
+	market_lookup_step -. data missing, retries left .-> data_retry_increment --> parse_address_step
+	market_lookup_step -. data ok / retries exhausted .-> rag_retrieval_step
+	rag_retrieval_step --> financial_calc_step --> risk_scoring_step --> recommendation_agent
+	recommendation_agent --> guardrail_step
+	guardrail_step -. unsupported claims, max 2 retries .-> recommendation_agent
+	guardrail_step -. no property data / no valid decision .-> final_report
+	guardrail_step -. human_review_required .-> human_review
 	human_review -. approved .-> final_report
 	human_review -. rejected + feedback .-> recommendation_agent
 	final_report --> __end__
 ```
 
-- Agents 1-5 are deterministic/tool-based: property lookup, market lookup, RAG,
-  investment metrics, and risk scoring.
-- The Recommendation Agent uses Groq for the judgment call and returns decision,
-  justification, evidence, and confidence.
-- The Guardrail Agent keeps checks concise: missing data, high risk, weak confidence,
-  negative operating cash flow, conflicting RAG evidence, and unsupported claims.
-- Human review is mandatory before a final report is produced.
+| Node | Kind | What it does |
+|---|---|---|
+| `parse_address_step` | deterministic | Parses the address, looks up the property in mock data |
+| `market_lookup_step` | deterministic | Looks up locality appreciation, rent and demand/supply |
+| `rag_retrieval_step` | deterministic | Top-k vector search over the document corpus (ChromaDB, local embeddings) |
+| `financial_calc_step` | deterministic | ROI, yields, cap rate, EMI and cash flow using the given LTV / rate / tenure |
+| `risk_scoring_step` | deterministic | 0-100 risk score from vacancy/crime/flood/regulatory/volatility indicators |
+| `recommendation_agent` | **LLM (Groq)** | BUY/HOLD/AVOID, justification, structured evidence, confidence; skipped when there is no property data |
+| `guardrail_step` | deterministic | Rule checks + claim check; routes to re-analysis, refusal or human review |
 
-## Low-Level Design (LLD)
+Each node is logged with its name, input/output summary and execution time
+(`logs/project.log`) and traced as its own LangSmith span when tracing is enabled.
 
-The Property AI system is implemented using a modular multi-agent architecture orchestrated by **LangGraph**.
+### Guardrail
 
-LangGraph maintains a shared `PropertyState` throughout execution, routes control between agents, manages retry logic for missing data and recommendation validation, and coordinates the mandatory human-in-the-loop approval process before report generation.
+**Claim check.** The Recommendation Agent must return each piece of supporting evidence as
+`{metric, cited_value, statement}`, where `metric` is one of a fixed set
+(`schemas.EVIDENCE_METRIC_FIELDS`) mapped to a `PropertyState` field — `roi_pct`,
+`rental_yield_pct`, `cap_rate_pct`, `annual_cash_flow_inr`, `unlevered_annual_cash_flow_inr`,
+`break_even_years`, `cash_flow_severity`, `risk_score`, `appreciation_rate_5yr_pct`,
+`price_inr` — or `rag_source` (must be a retrieved filename). The guardrail compares each
+cited value to the computed one: numbers must be within 2% or ±0.5 (whichever is looser),
+strings must match exactly, and unknown metric names count as unsupported. Unsupported
+claims trigger re-analysis (max 2 retries); claims still unsupported after that go to the
+human reviewer as `unverified_claims`, shown in the API response and in the report.
 
-Each agent performs a single responsibility and updates only the fields relevant to its task, making the workflow modular, maintainable, and easy to extend.
-```mermaid
-classDiagram
+**Rule checks (5 of 6 active):** missing property data (→ refuse), missing market data,
+risk score above threshold, negative operating cash flow, confidence below threshold. The
+sixth, the conflicting-evidence check, is **disabled**: it matched two AI-written Hinjewadi
+analyst notes that are no longer in the corpus and needs redesigning for real documents.
 
-%% ==========================
-%% ORCHESTRATOR
-%% ==========================
-
-class LangGraph {
-    +build_graph()
-    +route_workflow()
-    +manage_state()
-    +retry_missing_data()
-    +reanalyse_recommendation()
-    +interrupt_for_human_review()
-}
-
-%% ==========================
-%% SHARED STATE
-%% ==========================
-
-class PropertyState {
-    +property_address : str
-    +budget : float
-    +investment_horizon_years : int
-    +investment_strategy : str
-
-    +property_data : dict
-    +market_data : dict
-    +rag_context : list
-
-    +investment_metrics : dict
-    +risk_assessment : dict
-
-    +recommendation : dict
-    +guardrail_result : dict
-
-    +requires_human_review : bool
-    +human_decision : dict
-    +final_report : dict
-
-    +data_retry_count : int
-    +reanalysis_retry_count : int
-    +workflow_status : str
-    +errors : list
-}
-
-%% ==========================
-%% AGENTS
-%% ==========================
-
-class PropertyAgent{
-    +lookup_property()
-    +validate_input()
-}
-
-class MarketAgent{
-    +fetch_market_data()
-}
-
-class RAGAgent{
-    +query_chromadb()
-    +retrieve_documents()
-    +build_rag_context()
-}
-
-class InvestmentMetricsAgent{
-    +calculate_roi()
-    +calculate_cap_rate()
-    +calculate_rental_yield()
-    +calculate_cash_flow()
-}
-
-class RiskAssessmentAgent{
-    +compute_risk_score()
-}
-
-class RecommendationAgent{
-    +generate_recommendation()
-}
-
-class GuardrailAgent{
-    +check_risk()
-    +check_confidence()
-    +check_missing_data()
-    +check_conflicting_evidence()
-    +validate_claims()
-}
-
-class HumanApproval{
-    +approve()
-    +reject()
-}
-
-class ReportGenerator{
-    +generate_json()
-    +generate_markdown()
-    +generate_pdf()
-}
-
-%% ==========================
-%% DATA SOURCES
-%% ==========================
-
-class MockData{
-    +mock_properties.json
-    +mock_market_trends.json
-    +mock_risk_data.json
-}
-
-class ChromaDB{
-    +vector_search()
-}
-
-class GroqLLM{
-    +invoke()
-}
-
-%% ==========================
-%% ORCHESTRATION
-%% ==========================
-
-LangGraph --> PropertyAgent
-LangGraph --> MarketAgent
-LangGraph --> RAGAgent
-LangGraph --> InvestmentMetricsAgent
-LangGraph --> RiskAssessmentAgent
-LangGraph --> RecommendationAgent
-LangGraph --> GuardrailAgent
-LangGraph --> HumanApproval
-
-%% ==========================
-%% SHARED STATE
-%% ==========================
-
-PropertyAgent --> PropertyState
-MarketAgent --> PropertyState
-RAGAgent --> PropertyState
-InvestmentMetricsAgent --> PropertyState
-RiskAssessmentAgent --> PropertyState
-RecommendationAgent --> PropertyState
-GuardrailAgent --> PropertyState
-HumanApproval --> PropertyState
-ReportGenerator --> PropertyState
-
-%% ==========================
-%% EXTERNAL DEPENDENCIES
-%% ==========================
-
-PropertyAgent --> MockData
-MarketAgent --> MockData
-RiskAssessmentAgent --> MockData
-
-RAGAgent --> ChromaDB
-
-RecommendationAgent --> GroqLLM
-GuardrailAgent --> GroqLLM
-
-%% ==========================
-%% FINAL FLOW
-%% ==========================
-
-GuardrailAgent --> HumanApproval
-HumanApproval --> ReportGenerator
-```
-
+**Outcomes:** refuse (no property data, or no decision/justification) · re-analyse
+(unsupported claims, retries left) · human review (everything else — approval is always
+required before a report).
 
 ## Data
 
-No live scraping. The project uses curated mock data and a local RAG corpus:
+- `src/property_advisor/data/mock_properties.json`, `mock_market_trends.json`,
+  `mock_risk_data.json` — **synthetic** demo data (see note above).
+- `src/property_advisor/data/rag_corpus/*.txt` — RAG corpus converted from official and
+  secondary documents (below).
+- `src/property_advisor/data/rbi_hpi.csv` — RBI House Price Index, city × quarter
+  (`city, quarter, index_value, base_year, provisional`); three series with base years
+  2008-09, 2010-11 and 2022-23, which must not be mixed. Not yet used by the pipeline.
+- `src/property_advisor/data/rag_corpus_legacy/` — the original AI-written notes, kept for
+  reference only; not indexed.
 
-- `src/property_advisor/data/mock_properties.json`
-- `src/property_advisor/data/mock_market_trends.json`
-- `src/property_advisor/data/mock_risk_data.json`
-- `src/property_advisor/data/rag_corpus/*.txt`
+### RAG corpus
 
-The app runs offline except for Groq LLM calls. ChromaDB handles local vector retrieval;
-no embedding API key is required.
+Ten documents (~27,600 words, 253 chunks at 800 characters with 100 overlap):
+
+| File | Source | Type |
+|---|---|---|
+| `rbi_housing_finance_master_circular_2014.txt` | RBI Master Circular – Housing Finance, 2014 | primary, **withdrawn** |
+| `rbi_ltv_circular_2012.txt` | RBI LTV circular, 2012 | primary, **withdrawn** |
+| `rbi_ltv_riskweights_circular_2015.txt` | RBI LTV / risk-weight circular, 2015 | primary, **withdrawn** |
+| `rbi_hpi_press_release_*.txt` (3) | RBI House Price Index press releases, Q3 2025-26 to Q1 2026-27 | primary |
+| `income_tax_house_property.txt` | Income Tax Department, house property pages | primary |
+| `model_tenancy_act_2021_prs.txt` | PRS Legislative Brief on the Model Tenancy Act, 2021 | secondary |
+| `rera_act_2016_explainer.txt` | iPleaders blog explainer on RERA, 2016 | secondary |
+| `ndma_urban_flooding_excerpt.txt` | NDMA Urban Flooding Guidelines (buyer-relevant sections) | primary |
+
+Provenance, URLs, what was trimmed from each, and known gaps (official RERA Act text,
+current RBI housing-finance rules, Karnataka RERA Rules) are in
+[`rag_corpus/sources.md`](src/property_advisor/data/rag_corpus/sources.md). The withdrawn
+RBI circulars start with a "WITHDRAWN / SUPERSEDED" line and must not be quoted as current
+limits.
+
+Retrieval settings are configurable via `.env`: `RAG_CHUNK_SIZE` (800), `RAG_CHUNK_OVERLAP`
+(100), `RAG_TOP_K` (4). The index lives in `chroma_db/` and is rebuilt automatically when
+it is empty or the chunk settings change; delete `chroma_db/` after editing corpus files.
+
+The app runs offline except for Groq calls. ChromaDB embeds locally; no embedding API key
+is required (the embedding model is downloaded once on first use).
 
 ## Installation
 
@@ -266,21 +156,21 @@ LANGSMITH_API_KEY=...
 
 ```bash
 .venv/bin/python main.py --address "Whitefield, Bangalore" --budget 9500000 \
-  --horizon 5 --strategy rental
+  --horizon 5 --strategy rental --ltv 80 --interest-rate 9 --tenure 20
 ```
 
-Omit flags to be prompted interactively. At the human-review step, approve or reject
-the recommendation. Approval generates JSON, Markdown, and PDF reports under
+Omit flags to be prompted for address and budget. At the human-review step, approve or
+reject the recommendation. Approval generates JSON, Markdown, and PDF reports under
 `reports/`.
 
 Useful flags:
 
+- `--ltv`, `--interest-rate`, `--tenure` set the loan terms (defaults 80% / 9% / 20 years;
+  LTV must be ≤ 90%, rate 0–25%, tenure 1–30 years).
 - `--auto-approve` skips the approval prompt.
 - `--no-reports` skips report generation.
 - `--reports-dir <path>` changes the report destination.
 - `--demo` runs fixed demo scenarios.
-
-For manual presentation steps, see [DEMO_WALKTHROUGH.md](DEMO_WALKTHROUGH.md).
 
 ## Run the API and Frontend
 
@@ -295,17 +185,18 @@ guardrail reasons, then approve or reject. Approval generates downloadable repor
 
 Main endpoints:
 
-- `POST /analyze`
-- `POST /approve`
-- `POST /reject`
+- `POST /analyze` — `{address, budget, horizon?, strategy?, ltv?, interest_rate?, tenure?}`;
+  invalid loan terms return 422. A pending response includes `thread_id` and
+  `unverified_claims`.
+- `POST /approve` — `{thread_id}`
+- `POST /reject` — `{thread_id, feedback}`
 - `GET /reports/{filename}`
 
 ## Reports
 
-Generated reports include the property summary, market data, financial metrics, risk
-assessment, recommendation, guardrail reasons, human decision, and timestamp.
-
-Output files:
+Generated reports include the property summary, market data, financial metrics and loan
+assumptions, risk assessment, recommendation with structured evidence, unverified claims,
+guardrail reasons, RAG sources, human decision, and timestamp.
 
 ```text
 reports/<property_slug>.json
@@ -315,24 +206,56 @@ reports/<property_slug>.pdf
 
 ## Tests and Evals
 
-Deterministic tests:
+Tests (no Groq key or network needed — the LLM is stubbed; retrieval tests use the local
+Chroma index):
 
 ```bash
 .venv/bin/python -m pytest tests/ -v
 ```
 
-Evaluation scenarios, requiring `GROQ_API_KEY`:
+Evals are hand-checkable rules, each with a stated reason (`evals/scenarios.py`):
 
 ```bash
-.venv/bin/python evals/run_evals.py
+.venv/bin/python evals/run_deterministic.py   # no Groq key: metrics, risk, retry, refusal, cash-flow safety net
+.venv/bin/python evals/run_llm.py             # needs GROQ_API_KEY: full graph, checks decisions the data rules out
 ```
 
-The evals cover high-growth, weak-return, flood-risk, missing-data, and conflicting
-evidence scenarios.
+Deterministic rules include: invalid address → refused; high flood risk → risk ≥ 80 and
+human review; missing market data → retries exhausted; significantly negative operating cash
+flow → a forced BUY is downgraded. LLM rules only forbid decisions the data rules out (e.g.
+negative ROI → not BUY; high flood risk → not BUY). The conflicting-reports scenario is
+skipped while the conflict check is disabled.
 
 ## Observability
 
-Structured agent and router logs are written to `logs/project.log`.
+Structured node and router logs are written to `logs/project.log`.
 
 LangSmith tracing is optional. Set `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY`
 in `.env` to enable it.
+
+## Changes from the original group version
+
+- **Honest naming.** The five tool-based nodes were called "agents"; they are deterministic
+  steps and are now named and documented as such (`steps/`). The guardrail no longer uses
+  an LLM, so it is a step too. The only LLM agent is the Recommendation Agent. Log records
+  use `node_name` instead of `agent_name`.
+- **Deterministic claim checking.** `supporting_evidence` changed from free-text strings to
+  `{metric, cited_value, statement}` items. The Groq-based claim audit was replaced by code
+  that compares cited values with computed ones. Claims still unsupported after two
+  re-analyses reach the reviewer as `unverified_claims` instead of blocking the run.
+- **Refusal on unknown addresses.** When no property data is found after the data retries,
+  the Recommendation Agent skips its LLM call and the guardrail refuses.
+- **Loan inputs.** LTV, interest rate and tenure are inputs (CLI, API, validated state)
+  instead of hard-coded 80% / 9% / 20 years; the prompt and report use the actual terms.
+- **RAG.** The eight AI-written corpus notes were replaced with ten documents converted from
+  official/secondary sources (see `sources.md`); old notes moved to `rag_corpus_legacy/`.
+  Chunk size, overlap and top-k are configurable; the retrieval step now uses k=4 (was 6).
+  RBI House Price Index data was parsed to `rbi_hpi.csv`.
+- **Conflict check disabled.** It depended on the removed Hinjewadi notes.
+- **Evals.** Expectations are now rules with reasons rather than exact LLM decisions, split
+  into a deterministic suite (no key, also run by pytest) and an LLM suite.
+- **Tests.** Added stubbed-LLM tests for the graph (retry gate, re-analysis loop,
+  approve/reject, refusal), the API, the claim checker, loan inputs, and retrieval
+  assertions for five reference queries.
+- **Frontend.** Renders structured evidence statements; header text changed from
+  "Multi-agent" to "AI-assisted".

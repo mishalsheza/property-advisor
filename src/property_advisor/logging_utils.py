@@ -1,10 +1,10 @@
-"""Structured per-agent logging + LangSmith tracing.
+"""Structured per-node logging + LangSmith tracing.
 
-Every agent must log agent_name, an input summary, an output summary, and
-execution_time. Logs are
+Every graph node (deterministic step or LLM agent) logs node_name, an input
+summary, an output summary, and execution_time. Logs are
 written as JSON lines to ./logs/project.log and mirrored to the console.
 
-Each agent is also wrapped with LangSmith's @traceable decorator so it shows
+Each node is also wrapped with LangSmith's @traceable decorator so it shows
 up as its own named span when tracing is enabled (in addition to whatever
 LangGraph's own runnable tracing captures for the graph as a whole). If
 LANGSMITH_TRACING isn't enabled (no key configured), @traceable is a no-op —
@@ -60,11 +60,11 @@ def _summarize_value(value: Any, max_str_len: int) -> Any:
 
 
 @contextmanager
-def log_agent_call(agent_name: str, input_state: dict[str, Any]):
-    """Context manager that times an agent node and logs a structured record.
+def log_node_call(node_name: str, input_state: dict[str, Any]):
+    """Context manager that times a graph node and logs a structured record.
 
     Usage:
-        with log_agent_call("property_agent", state.model_dump()) as finish:
+        with log_node_call("parse_address_step", state.model_dump()) as finish:
             ...
             finish(output_state)
     """
@@ -78,12 +78,12 @@ def log_agent_call(agent_name: str, input_state: dict[str, Any]):
 
     execution_time = time.perf_counter() - start
     record = {
-        "agent_name": agent_name,
+        "node_name": node_name,
         "input_summary": _summarize(input_state),
         "output_summary": _summarize(captured.get("output_state", {})),
         "execution_time_seconds": round(execution_time, 4),
     }
-    logger.info("%s completed in %.3fs", agent_name, execution_time)
+    logger.info("%s completed in %.3fs", node_name, execution_time)
     _write_record(record)
 
 
@@ -109,16 +109,16 @@ def traced_router(router_name: str) -> Callable:
     return decorator
 
 
-def timed_node(agent_name: str) -> Callable:
+def timed_node(node_name: str) -> Callable:
     """Decorator that wraps a LangGraph node function with structured
-    logging AND LangSmith tracing (named span = agent_name)."""
+    logging AND LangSmith tracing (named span = node_name)."""
 
     def decorator(fn: Callable) -> Callable:
-        traced_fn = traceable(name=agent_name, run_type="chain")(fn)
+        traced_fn = traceable(name=node_name, run_type="chain")(fn)
 
         def wrapped(state):
             input_state = state.model_dump()
-            with log_agent_call(agent_name, input_state) as finish:
+            with log_node_call(node_name, input_state) as finish:
                 update = traced_fn(state)
                 finish(update if isinstance(update, dict) else {})
             return update

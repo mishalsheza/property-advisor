@@ -2,7 +2,7 @@
 """Validation harness: run the deterministic chain + Recommendation Agent over
 the entire mock dataset and report the BUY/HOLD/AVOID distribution.
 
-Isolates the decision step (the agent under investigation): real property,
+Isolates the decision step (the one LLM agent): real property,
 market, metrics and risk are computed per property; rag_context is left empty
 so the comparison is apples-to-apples and not subject to vector-store state.
 """
@@ -16,10 +16,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from property_advisor.agents.metrics_agent import investment_metrics_agent  # noqa: E402
 from property_advisor.agents.recommendation_agent import recommendation_agent  # noqa: E402
-from property_advisor.agents.risk_agent import risk_assessment_agent  # noqa: E402
 from property_advisor.state import PropertyState  # noqa: E402
+from property_advisor.steps.financial_step import financial_calc_step  # noqa: E402
+from property_advisor.steps.risk_step import risk_scoring_step  # noqa: E402
 
 DATA = Path(__file__).resolve().parent.parent / "src" / "property_advisor" / "data"
 PROPS = json.loads((DATA / "mock_properties.json").read_text())
@@ -41,8 +41,8 @@ def build_state(slug: str, strategy: str = "rental") -> PropertyState:
 
 def run(slug: str, strategy: str) -> dict:
     state = build_state(slug, strategy)
-    state = state.model_copy(update=investment_metrics_agent(state))
-    state = state.model_copy(update=risk_assessment_agent(state))
+    state = state.model_copy(update=financial_calc_step(state))
+    state = state.model_copy(update=risk_scoring_step(state))
     rec = recommendation_agent(state)["recommendation"]
     return {
         "slug": slug,

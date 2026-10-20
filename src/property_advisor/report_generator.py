@@ -51,6 +51,23 @@ def _fmt_inr(value: Any) -> str:
         return str(value)
 
 
+def _fmt_loan(loan: dict[str, Any]) -> str:
+    if not loan:
+        return "N/A"
+    return (
+        f"{loan.get('loan_to_value_ratio', 0) * 100:g}% LTV, {loan.get('interest_rate_pct')}% interest, "
+        f"{loan.get('loan_tenure_years')} yrs, EMI {_fmt_inr(loan.get('monthly_emi_inr'))}/month"
+    )
+
+
+def _fmt_evidence(item: dict[str, Any]) -> str:
+    return f"{item.get('statement', '')} ({item.get('metric')}={item.get('cited_value')})"
+
+
+def _fmt_unverified(claim: dict[str, Any]) -> str:
+    return f"{claim.get('statement', '')} [{claim.get('metric')}: {claim.get('reason')}]"
+
+
 # --------------------------------------------------------------------------
 # JSON
 # --------------------------------------------------------------------------
@@ -107,6 +124,7 @@ def _render_markdown(report: dict[str, Any], generated_at: str) -> str:
         f"- Cap rate: {metrics.get('cap_rate_pct', 'N/A')}%",
         f"- Annual cash flow: {_fmt_inr(metrics.get('annual_cash_flow_inr', 'N/A'))} ({metrics.get('cash_flow_severity', 'N/A')})",
         f"- Break-even (years): {metrics.get('break_even_years', 'N/A')}",
+        f"- Loan assumptions: {_fmt_loan(metrics.get('loan_assumptions', {}))}",
         f"- Strong appreciation evidence: {metrics.get('strong_appreciation_evidence', 'N/A')}",
         "",
         "## Risk Assessment",
@@ -121,7 +139,10 @@ def _render_markdown(report: dict[str, Any], generated_at: str) -> str:
         f"{rec.get('justification', '')}",
         "",
         "### Supporting Evidence",
-        *([f"- {e}" for e in rec.get("supporting_evidence", [])] or ["- None provided"]),
+        *([f"- {_fmt_evidence(e)}" for e in rec.get("supporting_evidence", [])] or ["- None provided"]),
+        "",
+        "### Unverified Claims",
+        *([f"- {_fmt_unverified(c)}" for c in report.get("unverified_claims", [])] or ["- None"]),
         "",
         "## Guardrail Result",
         f"- Status: {guardrail.get('status', 'N/A')}",
@@ -229,6 +250,7 @@ def _write_pdf(report: dict[str, Any], path: str, generated_at: str) -> None:
                 ("Cap rate", f"{metrics.get('cap_rate_pct', 'N/A')}%"),
                 ("Annual cash flow", f"{_fmt_inr(metrics.get('annual_cash_flow_inr', 'N/A'))} ({metrics.get('cash_flow_severity', 'N/A')})"),
                 ("Break-even", f"{metrics.get('break_even_years', 'N/A')} years"),
+                ("Loan assumptions", _fmt_loan(metrics.get("loan_assumptions", {}))),
                 ("Strong appreciation evidence", str(metrics.get("strong_appreciation_evidence", "N/A"))),
             ]
         ),
@@ -247,7 +269,13 @@ def _write_pdf(report: dict[str, Any], path: str, generated_at: str) -> None:
         Paragraph(rec.get("justification", ""), body),
         Spacer(1, 6),
         Paragraph(
-            "Supporting evidence: " + ("; ".join(rec.get("supporting_evidence", [])) or "None provided"),
+            "Supporting evidence: "
+            + ("; ".join(_fmt_evidence(e) for e in rec.get("supporting_evidence", [])) or "None provided"),
+            body,
+        ),
+        Paragraph(
+            "Unverified claims: "
+            + ("; ".join(_fmt_unverified(c) for c in report.get("unverified_claims", [])) or "None"),
             body,
         ),
         Paragraph("Guardrail Result", h2),

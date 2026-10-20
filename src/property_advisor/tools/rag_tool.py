@@ -13,6 +13,8 @@ import os
 import chromadb
 from chromadb.utils import embedding_functions
 
+from property_advisor.config import RAG_CHUNK_OVERLAP, RAG_CHUNK_SIZE, RAG_TOP_K
+
 _CORPUS_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "rag_corpus")
 _PERSIST_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "chroma_db"
@@ -23,7 +25,7 @@ _client = None
 _collection = None
 
 
-def _chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[str]:
+def _chunk_text(text: str, chunk_size: int = RAG_CHUNK_SIZE, overlap: int = RAG_CHUNK_OVERLAP) -> list[str]:
     chunks = []
     start = 0
     while start < len(text):
@@ -41,14 +43,19 @@ def _get_collection():
     os.makedirs(_PERSIST_DIR, exist_ok=True)
     _client = chromadb.PersistentClient(path=_PERSIST_DIR)
     embedding_fn = embedding_functions.DefaultEmbeddingFunction()
+    chunk_config = {"chunk_size": RAG_CHUNK_SIZE, "chunk_overlap": RAG_CHUNK_OVERLAP}
     existing = {c.name for c in _client.list_collections()}
-    needs_build = _COLLECTION_NAME not in existing
+    if _COLLECTION_NAME in existing:
+        stored = _client.get_collection(_COLLECTION_NAME).metadata or {}
+        if any(stored.get(k) != v for k, v in chunk_config.items()):
+            # Index was built with different chunking: rebuild from scratch.
+            _client.delete_collection(_COLLECTION_NAME)
 
     _collection = _client.get_or_create_collection(
-        name=_COLLECTION_NAME, embedding_function=embedding_fn
+        name=_COLLECTION_NAME, embedding_function=embedding_fn, metadata=chunk_config
     )
 
-    if needs_build or _collection.count() == 0:
+    if _collection.count() == 0:
         _build_index(_collection)
 
     return _collection
@@ -70,7 +77,7 @@ def _build_index(collection) -> None:
         collection.add(ids=ids, documents=documents, metadatas=metadatas)
 
 
-def query_rag(query: str, k: int = 4) -> list[dict[str, str]]:
+def query_rag(query: str, k: int = RAG_TOP_K) -> list[dict[str, str]]:
     """Query the vector store, returning [{text, source}, ...]."""
     collection = _get_collection()
     results = collection.query(query_texts=[query], n_results=k)

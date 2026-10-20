@@ -1,0 +1,406 @@
+National Disaster Management Guidelines: Management of Urban Flooding — National Disaster Management Authority (NDMA), Government of India, September 2010.
+EXCERPT: sections 1.2, 1.3, 1.6, 4.18, 4.23, 5.4, 5.5, 5.8, 6.1, 6.3, 6.4, 6.5, 6.6, 6.7 only (buyer-relevant: land use, encroachment, flood-prone zoning, building regulations, urban sprawl).
+
+1.2 Urban Flooding is Different
+
+1.2.1 Urban flooding is significantly different from rural flooding as urbanisation leads to developed catchments, which increases the flood peaks from 1.8 to 8 times and flood volumes by up to 6 times. Consequently, flooding occurs very quickly due to faster flow times (in a matter of minutes).
+
+1.2.2 Urban areas are densely populated and people living in vulnerable areas suffer due to flooding, sometimes resulting in loss of life. It is not only the event of flooding but the secondary effect of exposure to infection also has its toll in terms of human suffering, loss of livelihood and, in extreme cases, loss of life.
+
+1.2.3 Urban areas are also centres of economic activities with vital infrastructure which needs to be protected 24x7. In most of the cities, damage to vital infrastructure has a bearing not only for the state and the country but it could even have global implications. Major cities in India have witnessed loss of life and property, disruption in transport and power and incidence of epidemics. Therefore, management of urban flooding has to be accorded top priority.
+
+1.2.4 Increasing trend of urban flooding is a universal phenomenon and poses a great challenge to urban planners the world over. Problems associated with urban floods range from relatively localised incidents to major incidents, resulting in cities being inundated from hours to several days. Therefore, the impact can also be widespread, including temporary relocation of people, damage to civic amenities, deterioration of water quality and risk of epidemics.
+
+1.3 Contributory Factors
+
+Floods in urban areas can be attributed to one or a combination of different factors listed in Table 1.1.
+
+Table 1.1: Factors Contributing to Urban Flooding
+
+[Table body omitted: two-column list of meteorological, hydrological and human factors.]
+
+Source: Adapted from Urban Food Risk Management: A Tool for Integrated Flood Management, AFPM document, GWP and WMO, 2008
+
+* Three more human factors are added in the Indian Context.
+
+1.6 Urbanisation and Pressure on Land
+
+1.6.1 Urban areas are normally centres of commercial activity and continue to attract migrants in large numbers in search of employment from different areas. Rapid urbanization puts a lot of pressure on land and as a result, habitations keep coming up in the natural areas/flood plains. This is happening universally including in U.K. According to the Pitt’s Report (2008), most of the houses affected by the floods in UK in 2007 were constructed during the last 25 years.
+
+1.6.2 In Indian cities and towns, large habitations are coming up in low-lying areas, often encroaching over drainage channels. In some cases, houses are constructed even on top of nallahs and drains. Encroachment in the immediate upper catchments of hilly urban area has also caused serious flooding in the flood plains of cities surrounded by hills.
+
+1.6.3 In the absence of a proper sewerage system, most of the habitations discharge their sewage into the existing stormwater channels. The net result has been that the width of the natural drainage channels has become inadequate and the capacity for draining the rainwater has been greatly reduced.
+
+1.6.4 Moreover, urbanisation leads to increase in impervious areas which, in turn, significantly increases the rate of runoff, resulting in overwhelming of designed capacity of the stormwater drainage system. As a result of all these happenings, even small amounts of rainfall can cause urban flooding.
+
+4.18 Water Bodies
+
+4.18.1 Urban water bodies like lakes, tanks and ponds also play a very important role in the management of urban flooding by reducing the stormwater run-off by capturing it. In the past there have been many water bodies but over the years their numbers have been dwindling for various reasons. There have been encroachments. There are some instances of reclaiming water bodies and area reclaimed has been used for various activities. It is not only private parties but even governments that have been responsible for such things.
+
+All urban water bodies will be protected. Efforts will also be made to restore water bodies by de-silting and taking other measures. Efforts will also be made to revive water bodies that have been put to other uses. Water bodies will be an integral part of the stormwater system.
+
+[Action: States, ULBs]
+
+4.23 Encroachments
+
+4.23.1 Natural streams and watercourses have formed over thousands of years due to the forces of flowing water in the respective watersheds. Habitations started growing into towns and cities alongside rivers and watercourses. As a result of this, the flow of water has increased in proportion to the urbanization of the watersheds. Ideally, the natural drains should have been widened (similar to road widening for increased traffic) to accommodate the higher flows of stormwater. But on the contrary, there have been large scale encroachments on the natural drains and the river flood plains. Consequently the capacity of the natural drains has decreased, resulting in flooding. i)
+
+Encroachments on nallahs/ drains/ watercourses will be removed by providing alternative accommodation to the Below Poverty Line (BPL) people and appropriarte rehabilitation package for other categories of people, ii)
+
+The nallahs/ drains/ watercourses/ flood plains should be clearly delineated and boundaries fixed in new developments. There will be strict enforcement of the relevant byelaws/regulations in the new layouts as discussed in Chapter 6, and iii)
+
+Any encroachment on the drain will attract penal action and be treated as a cognizable offence, both against the encroachers and the officials responsible for enforcement of the byelaws/ regulations.
+
+[Action: MoUD, States/UTs and ULBs]
+
+Yokohama Strategy
+
+The Yokohama Strategy for a Safer World: Guidelines for Natural Disaster Prevention, Preparedness and Mitigation and its Plan of Action adopted in 1994 provides landmark guidance on reducing disaster risk and the impacts of disasters.
+
+The review of progress made in implementing the Yokohama Strategy identifies major challenges for the coming years in ensuring more systematic action to address disaster risks in the context of sustainable development and in building resilience through enhanced national and local capabilities to manage and reduce risk.
+
+5.4 Vulnerability Analysis and Risk Assessment
+
+5.4.1 Presently, there are no flood risk assessments for many of the cities/towns for planning the DRM. An urban flood risk management plan has to start with the assessment of present and future flood risks. The clear understanding and distinction between the three components that define the degree of risk i.e., hazard, vulnerability and ability to cope with, provides the necessary information for the overall management of risks. Risk assessment has to be carried out in an integrated manner, i.e. identifying all the possible hazards, including consequence of urbanization or other development activities in future.
+
+5.4.2 The hydrologic and hydraulic characteristics of these hazards have to be inventoried in addition to the economic, political, socio-cultural and ecological environment information of the flood prone/ vulnerable areas. Such an assessment should give information about the probability of a hazard’s occurrence and the respective potential damage and loss.
+
+5.4.3 A number of different scenarios should be modelled, in order to understand the consequences of likely future urban floods (future urbanization, climate change and land use changes, etc.). The results of such models provide information about the expected flood frequencies and magnitudes (extent, depth, duration and flow velocities), thereby mapping of areas and elements, which are exposed to floods.
+
+5.4.4 Risk, Hazard Assessment and Mapping
+
+5.4.4.1 Flood management professionals should evaluate the levels of acceptable risk, based on specific site conditions, to make people aware what risk is present in their lives, and to assist them in making formal acceptance, based on which adequate flood protection measures can be taken up.
+
+5.4.4.2 Flood hazard means the threat to life or the threat of damage to property as a consequence of flooding. Hazard maps have to be presented in a form that is fully understandable, with all affected populated areas, facilities and structures indicated and marked. Hazard zoning maps present hazard levels together with the probable intensity of magnitude in each hazard zone.
+
+5.4.4.3 Risk is a quantification of hazard. Risk mapping is the activity where elements at risk are plotted on hazard maps. Risk maps may include certain guidance, advice and indication of escape routes, safe access ways, etc. Risk assessment that provides the planner with an estimate of the expected material losses includes: i)
+
+Identification of areas at risk upon its exposure to hazard, ii)
+
+Classification of structures according to function, iv)
+
+Estimation of risk for each structure type, and v)
+
+Estimation of all risks for each function and then for each area.
+
+5.4.4.4 There are also economically non- quantifiable aspects, such as potential loss of life and indirect secondary losses. For their evaluation and assessment, standard indicators for housing areas, infrastructure and various economic activities are eventually made available by state authorities that regulate insurance policies.
+
+5.4.4.5 A flood risk map has several direct economic effects, since it causes revision of all planning maps for the area. On the negative side, it may lower property value in the flood- prone areas and may stop development. On the positive side, the map initiates the construction of flood loss prevention structures, alerts prospective land and property owners, as well as provides new developing ideas to the local planning authorities. i)
+
+Risk assessment will be carried out with a multi-hazard concept leading to foolproof land use planning, ii)
+
+Quantification of risks will start with the analysis of hydro-meteorological data and the hydraulic simulation of floods, and iii)
+
+Flood hazard assessment will be made for standard baseline conditions to ascertain level of acceptable risk of flooding, on the basis of projected future scenarios of rainfall intensities and duration and land use changes.
+
+[Action: CWC, SoI, NRSC and SRSACs]
+
+5.5 Estimation of Possible Inundation levels
+
+5.5.1 The natural drainage system within an urban area is highly modified and its hydraulic characteristics are affected by day- to-day activities like dumping of solid waste into the drainage system. The characteristics of surface runoffs also tend to overwhelm and impact the carrying capacity of surface drainage system. As such, determination of the likely flood prone areas due to localised flooding is complicated and has to be undertaken with greater understanding of all the factors affecting the drainage systems.
+
+5.5.2 Cities/ towns close to the coast- lines are susceptible to flooding due to storm surges during cyclonic/ tsunami events and compounded with intense rainfall associated with cyclones/ depressions. Further, projected climate change induced sea-level rise will also be taken into consideration for arriving at possible inundation. Similarly cities/ town adjacent to river systems need to be simulated for maximum possible inundation, occurring for different inflows and discharges. Cities/ towns on the upstream side of reservoirs shall be analyzed for maximum possible inundation due to backwater effect. Similarly, the effect of sudden release of water from reservoirs/ dams on the cities/towns located on the downstream side also need to be analysed.
+
+5.5.3 Probable maximum inundation due to intense localised rainfall causing flash floods shall be simulated for various intensities of rainfall as the recent times have shown high intensity rainfall over urban areas in shorter intervals than the recorded historical events. Similarly, the coastal cities shall be analyzed/ simulated for possible inundation due to maximum probable storm surge and the inundation levels for various intensities of cyclones taking high tide into consideration. The maximum probable inundation in the cities/ towns adjacent to river systems and falling within the flood plains shall be arrived at by simulating the flows in the river systems for various intensity of flows and return periods. While mapping the inundation prone areas existing drainage capacities of the cities need to be considered for arriving at the duration of such flash flood situation.
+
+The magnitudes of inundation levels due to various scenarios and causes will be simulated on GIS-based inundation model, duly incorporating drainage capacities in the analysis in order to estimate depth, duration and extent of inundation by using an integrated city specific framework.
+
+[Action: CWC, NRSC and SRSACs]
+
+5.8 Reducing Vulnerability
+
+5.8.1 Vulnerabilities are generally due to the geographical features of an area, meteorological phenomenon, unsafe conditions that are developed by human actions or inactions. So, it is essential to identify the root causes of these vulnerabilities, specific to an area under consideration in order to mitigate the causes rather than the consequences.
+
+5.8.2 Reducing Physical Vulnerability of People and Infrastructure
+
+5.8.2.1 Physical vulnerability of an area is mainly due to the natural features of that area which are difficult to alter or completely change to make the area safe against urban flood risk. However, the physical vulnerability of an area can be mitigated by ensuring adequate access to basic needs like flood shelters, medical facilities, etc. and by improving the preparedness, comprising of updated evacuation plans, frequently updated building codes and a list of retrofitting plans suitable for an area.
+
+5.8.3 Reducing Socio-economic Vulnerability
+
+5.8.3.1 Socio-economic vulnerability of an area is mainly related to the economical conditions and social fabric of the population living in the area under consideration. Reducing the socio-economic vulnerability is on a long-term perspective. In arriving at the measures required for the area to make it less vulnerable due to urban floods, policy decisions related to the area need to be taken involving political leadership of the area, institutionalizing participatory approaches and supporting community-based organizations (CBOs). It will also cover economic development plans duly diversifying the income sources and implementing flood insurance schemes.
+
+5.8.4 Insurance and Risk Transfer
+
+5.8.4.1 Over the past decade, urban India has experienced series of floods, resulting in damages worth hundreds of crores of rupees. Government provides very nominal compensation to people BPL, while a large number of middle and high income people do not receive any compensation.
+
+5.8.4.2 Insurance is a major tool for risk transfer, which covers high risks with minimum premiums. Micro-insurance and micro-credit are the services developed especially for low- income groups. i)
+
+Research on how floods threaten vulnerable urban populations and how they are affected must be developed in order to develop the best strategies for disaster mitigation. The research should be set in the Indian techno-legal context and draw from the Indian experience. The research should focus on three key areas: risk identification, risk pooling and risk transfer. The risk should focus on both property, people, and ii)
+
+States/UTs will build partnerships with public/ private insurance companies and civil society to sensitise communities about available schemes and also develop appropriate micro-insurance schemes, targeted at low-income groups. The partnerships should be based upon need, post performance, key objectives and cost effectiveness. A database of partners should be available in the public domain.
+
+[Action: States/UTs and ULBs]
+
+6.1 Overview
+
+6.1.1 A pattern has been evolved over millions of years for the path to be defined for water to flow in streams, rivulets, tributaries and rivers and ultimately discharge into the sea. All known forms of life depend on water. Water is our lifeline it bathes us and feeds us. Civilisations started close to water sources – on the banks of rivers, in valleys, along the coastline. Every city/town falls within the basin, sub-basin, and watershed of a river system and receives rains.
+
+6.1.2 In the beginning, the sites selected for habitation were on high ground, as they were considered safe, away from the flood plains. Over the ages, as civilizations grew in size, and towns and cities came into existence, there was pressure on land. This resulted in habitations spilling into floodplains and interfering with the flow of water.
+
+6.1.3 Water will find its way, no matter what. When we interfere with its natural flow, it finds its own way and, that is why, flooding takes place. Growing urbanisation, resulting in a developed catchment, has added to the woes, as it translates into higher runoff as compared to an undeveloped catchment.
+
+6.3 Legal Support for Planned Development of Urban Areas
+
+6.3.1 Management of urban flooding should aim at minimizing the exposure of communities to the adverse effects of flooding in cities and towns. The techno-legal regime can be a very useful tool in that direction. Master Planning, Zonal Planning, Development Country Regulations and Building byelaws provide the mandatory techno-legal framework for regulating the built environment.
+
+6.3.2 Such laws are mainly state legislations as the State is competent to legislate and make laws on such subjects. However, in States and UTs such as Delhi, where land use is reserved with the Central Government. The Central Government is to legislate on such subjects and the Parliament is to make necessary laws.
+
+6.4 Central Legislations/ Guidelines
+
+6.4.1 Delhi Development Act - 1957
+
+Taking this legislation as a model, state governments were guided to formulate the rules and regulations with the help of local bodies under various legislations. After approval, the local bodies enforced these rules and regulations pertaining to the development and building standards as building regulations/ building byelaws in their respective areas.
+
+6.4.2 Model Town and Country Planning Act 1960
+
+The Town and Country Planning Organization (TCPO), under the administrative control of MoUD, is the apex organisation to deal with the subject of planning (regional, urban and rural) and developmental policies. It formulated a Model Town and Country Planning Act in the year 1960 with the following provisions: i)
+
+Provisions for preparation of comprehensive Master Plan for urban areas of various states. The states may adopt the model legislation with suitable modifications for this purpose, ii)
+
+To constitute a Board to advise and to coordinate in the matter of planning and plan formulation by the Local Planning Authorities in the State, and iii)
+
+Provisions for implementation and enforcement of the Master Plans and the miscellaneous provisions to achieve planned urban growth of various urban areas in the state.
+
+6.4.3 Model Regional and Town Planning and Development Law 1985
+
+The 1960 Act was revised in 1985 and this has largely been the basis for the enactment of comprehensive urban and regional planning legislation in States and UTs. This model is in the nature of a guideline and is the outcome of several reviews and revisions undertaken on the recommendations of conferences of state ministers held from time to time. The legality of this model was confirmed by the Ministry of Law and Justice, GOI.
+
+6.4.4 Model Urban and Regional Planning and Development Law 1993
+
+A model Urban and Regional Planning and Development Law was also brought out, taking into account the provisions of 74th Constitutional Amendment Act (CAA), along with suggested changes in the Maharashtra and Gujarat Town Planning Acts.
+
+6.4.5 Urban Development Plans Formulation and Implementation Guidelines 1996
+
+In 1996, the Ministry of Urban Development, GoI, brought out the Urban Development Plans Formulation and Implementation (UDPFI) Guidelines. The Guidelines recommend an Urban Planning System consisting of a set of four inter-related plans as follows: i)
+
+Perspective plan, ii)
+
+Development plan, iii)
+
+Annual plan, and iv)
+
+Plans of projects and schemes.
+
+6.4.6 National Building Code
+
+6.4.6.1 The National Building Code of India (NBC), a comprehensive building code provides guidelines for regulating the building construction activities across the country. It serves as a Model Code for adoption by all agencies, involved in building construction work. The Code was first published in 1970 at the instance of the Planning Commission and then revised in 1983. Thereafter, three major amendments were issued, two in 1987 and the third in 1997.
+
+6.4.6.2 Considering a series of further developments in the field of building construction, including the lessons learnt in the aftermath of a number of natural calamities, like devastating earthquakes and super-cyclones witnessed by the country, a project for comprehensive revision of NBC was taken up under the aegis of the National Building Code Sectional Committee, CED 46 of BIS and its 18 expert panels, involving as many as 400 experts. As a culmination of the Project, the revised NBC was brought out as National Building Code of India 2005, (NBC 2005).
+
+6.4.6.3 Annex 1 of the comprehensive NBC, 2005 contains 11 parts, some of which are further divided into sections totalling 26 chapters. Annex 2 contains salient features of the revised NBC and includes, apart from other changes made, the changes especially with regard to further enhancing our response to meet the challenges posed by natural calamities and reflecting the state-of-the-art and contemporary applicable international practices.
+
+6.4.7 Initiatives of the Ministry of Environment and Forests
+
+6.4.7.1 The Ministry of Environment and Forests (MoEF) is the nodal agency in the administrative structure of the central government for planning, promotion, co-ordination and overseeing the implementation of environmental and forestry programmes.
+
+6.4.7.2 Besides the Water Act of 1974 and Air Act of 1981, and other legislations, the Environmental (Protection) Act (EPA) was enacted in 1986. It is an umbrella legislation, empowering central government to take measures necessary to protect and improve the quality of the environment by setting standards for emissions and discharges; regulating the location of industries; management of hazardous wastes, and protection of public health and welfare. Certain initiatives of MoEF are relevant in the context of urban flooding.
+
+6.4.7.3 Under this Act, MoEF issued the Municipal Solid Waste (Management and Handling) Rules, 2000, notified on 25th September 2000, in exercising of the powers conforming to section 3 and 25 of EPA. The MSW Rules provide a framework encompassing collection, transportation, treatment and disposal of municipal solid waste. These rules are complemented by the existing Biomedical Waste Rules of 1998 and Hazardous Waste Rules of 1989 respectively, whereby disposal of these wastes, along with usual urban municipal waste, is prohibited.
+
+6.4.7.4 Environmental Impact Assessment
+
+EIA is one of the proven management tools for incorporating environmental concerns in the development process and also in improved decision-making. The growing awareness over the years on environmental protection and sustainable development has further laid emphasis on sound environmental management practices. The programme of EIA, in vogue in MoEF for the last two decades, was initiated with the appraisal of river valley projects. The scope of appraisal was subsequently enlarged to cover other sectors like industrial projects, thermal power plants, mining schemes and infrastructure projects. EIA was made mandatory for 32 categories of development activities on the basis of EIA Notification S.O. 60(E) dated 27th January 1994.
+
+This was further amended vide S.O. 801 (E) dated 7th July, 2004. This brought within its purview new projects related to construction of townships, industrial townships, settlement colonies, commercial complexes, hotel complexes, hospitals, office complexes for 1000 persons and above, or discharging sewage of 50,000 litres per day and above, or with an investment of ` 50 crores and above, and new industrial estates having an area of 50 hectares and above, etc. i)
+
+Stormwater drainage concerns will be made a part of all EIA norms, and ii)
+
+Sometimes to overcome compliance to EIA, projects are split into smaller areas. Guidelines will be issued to State EIA Authorities to subject even smaller projects to meet EIA norms.
+
+[Action: MoEF, MoUD, States/UTs
+
+6.4.8 State Level Legislation
+
+6.4.8.1 Planning and development are state subjects and therefore, the development in the states is based on the legislative support as applicable in that state. The legislative support in the state is applicable to formulate Master Plans, Zonal Development Plans and Area Planning lay-outs for their implementation and enforcement.
+
+6.4.9 Legislative Support at the Local/ Municipal Level
+
+6.4.9.1 At the local level, the Municipal Authorities and Panchayats regulate the development/construction of buildings through the building byelaws as followed in their respective areas. The State Governments/UTs from time to time issue directions/guidelines for safety against natural hazards, which are followed by local bodies while granting permission for construction of buildings/ structures.
+
+6.5 Study by Experts Committee (2004)
+
+6.5.1 A National Core Group, set up by the MHA on earthquake mitigation, suggested that the State Town and Country Planning Act as well as Zoning regulations be reviewed so as to ensure that these are in conformity with the mitigation requirement. MHA constituted a Committee to look into this in January 2004.
+
+6.5.2 The Committee studied the Model Town and Country Planning legislations framed during 1960, based on which most of the State Town and Country legislations are enacted. The Committee also studied the revised Model Regional Town Planning and Development Law 1985 framed by Town and Country Planning Organisation, Ministry of Urban Development and Poverty Alleviation, and UDPFI Guidelines. Model Urban and Regional Planning and Development Law was formulated, keeping in view the earlier Model Planning Legislation and incorporating various provisions of 73rd and 74th Constitution Amendments.
+
+6.5.3 The Committee proposed amendments in the above-mentioned documents, by incorporating the various terminologies pertaining to natural hazards, natural hazard proneness and mitigation under the relevant sections and included the hazards due to earthquakes, cyclones, floods, and landslides. Amendments were suggested to take note of the natural hazard mitigation, while formulating the development plans for various levels like perspective plan, development plan, zonal development plan and area plan. Additional provisions have also been suggested for formulating the regulations for land use zoning and development control/building regulations with regard to natural hazard mitigation.
+
+6.5.4 The detailed recommendations were made for additional provisions to be incorporated in the development control regulations for safety in natural hazard prone areas and the building byelaws for structural safety. Details of various BIS codes, relating to structural safety for natural hazards are given for the guidance of the professionals to design the structures/buildings, keeping in view the provisions of such codes against different natural hazards.
+
+6.5.5 The Committee observed that there are large areas where Town Planning Legislation and Development Control/Building byelaws are not applicable and the sanctioning authority is the Development Commissioner through Central Public Works Department (CPWD)/ PWD or other such agencies. Therefore, the Committee recommended that in such areas, the sanctioning authority should be advised to take into consideration provisions regarding the structural safety in natural hazard prone areas while sanctioning development/projects in such areas, under their respective legislation.
+
+6.6 Subsequent Amendments
+
+The Experts Committee had proposed amendments to rules and byelaws, relating to Layout Approvals and Building Permissions, to address DM related issues. Many states have incorporated and amended their rules and bye- laws but all states are not on par in doing this. Salient features of the amended rules and bye- laws having relevance to urban flood management are included below, under both the categories.
+
+6.6.1 Layout Approvals
+
+• Minimum requirement for approval of Layout i.
+
+The Layout proposal shall conform to the following requirements:
+
+(a) Shall have approach through an existing road, the width of such shall not be less than 12 m (in case of land-locked plots, the owner has to ensure the approach road through neighbouring lands accordingly),
+
+(b) Minimum width of proposed roads in the layout shall be 12 m for residential in Gram Panchayats and 18 m in other areas and non-residential layouts. Notwithstanding the above minimum width, the Executive Authority may insist upon larger road widths depending upon local conditions or importance of any particular road, etc. The width of the roads in the layouts shall be in conformity with the General Town Planning Scheme or the Master Plan, if any in force,
+
+(c) Minimum open space set apart in the proposed layout for playground/park/educational institution or for any other public purpose shall be at the rate of 10% of the total site area,
+
+(d) The minimum plot size for non- residential layouts shall be 300 sq m except in case of Commercial or Mercantile buildings for which the minimum plot size shall be 18 sq m, and
+
+(e) The applicant should provide a service road of minimum 12 m width for the layout if the land is abutting to National Highway having less than 60 m width.
+
+• Required specifications and conditions i)
+
+The owner of a site shall undertake the following works under the supervision of Executive Authority with the surveyors after intimation of the layout approval by the Executive Authority: a)
+
+Levelling with suitable gradient and formation of all roads with sub-surface, kerbstones, metalling of the carriageway, side drains as per specifications mentioned in the rules, b)
+
+Construction of drains and channelization of nallahs/ stormwater drains for allowing stormwater runoff. These may be channelised in such a way as to conserve or harvest the water in the nearest water body or public open space, etc, c)
+
+Undertake plantation in the layout including avenue plantation, in public open spaces, etc, d)
+
+Fencing of open spaces, and e)
+
+Unless the conditions specified above are fulfilled, the owner shall not be entitled to utilize, sell, lease or otherwise dispose of the land or any portion thereof. ii)
+
+The following works shall be undertaken through the Executive Authority upon payment of proportionate charges at a later date:
+
+(a) Street-lighting and electricity facilities, and
+
+(b) Provision of disposal system and protected water supply system.
+
+• Restrictions of building activity in the vicinity of certain areas i)
+
+No building activity shall be allowed in the bed of water bodies like river, lake, pond or nallah/ stormwater drain, etc, and
+
+No building activity shall be carried out within : ii) a)
+
+50 m from the boundary of rivers and lakes of surface area for 10 Ha and above, b)
+
+30 m from the boundary of lakes of surface area for less than 10 Ha, and c)
+
+12 m from nallahs, canals, etc.
+
+• Rainwater Harvesting i.
+
+Every building proposed for construction shall be provided with required facilities and infrastructure for conservation and harvesting of rainwater, and ii.
+
+Percolation pits or Trenches.
+
+The paved surface around the building shall have percolation pits or trenches or combination of pits and trenches in such a way that total volume of such structure shall not be less than 6 cubic m for each 100 sq m of roof-top area and multiples thereof. Depending on the geomorphologic and topographical conditions, the pits can be of size 1.2 m wide x 1.2 m long x depth of 2 to 2.5 m. The trenches can be of width of 0.6 m x length of 2 to 6 m x depth of 1.5 to 2 m. Terrace water shall be canalized through pits and/or trenches. The pits shall be backfilled with filter media comprising of the following materials.
+
+(a) 40 mm road metal as the bottom layer upto 50% of the depth,
+
+(b) 10 mm road metal as the lower middle layer upto 20% of the depth,
+
+(c) Coarse sand as the upper middle layer upto 20% of the depth,
+
+(d) Top 10% of the pits/trenches will be empty and a splash pad is to be provided in such a way that roof-top water falls on the splash pad,
+
+(e) Brick masonry wall is to be constructed and cement mortar plastered on the exposed surface. The depth of the wall below the ground shall be such that the wall prevents loose soil going into pits/trenches. The projection of the all above ground should be minimum of 15 cm, and
+
+(f) Perforated concrete slabs shall be provided on pits and trenches.
+
+Terrace water collection a)
+
+The terrace shall be connected to a sump or the wall through a filtering tank by P.V.C. pipe. A valve system shall be incorporated to enable the first part of the rain- water collected to discharge out to the ground, if it is dirty, and b)
+
+A filtering tank, measuring 1m X 1m X 1m, can be constructed near the sump. The tank can be divided by a partition slab and one part shall be filled by fine sand and other by coarse sand. The bottom portion of the tank should have a slope to avoid stagnation of water. iv.
+
+Open Ground
+
+Wherever there is an open ground, the top soil shall be removed over a portion of the ground and back filled with coarse sand to allow percolation of rainwater. Any other methods, proved to be effective in conservation and harvesting of rainwater, may be adopted in each and every construction taken up. v.
+
+The proposal shall comply with the provisions of relevant regulations in force. vi.
+
+In case the layout area exceeds 50 Ha, the NOC from Central Pollution Control Board/ MoEF is mandatory.
+
+6.6.2 Building Permissions
+
+• Restrictions of Building Activity in Vicinity of Certain Areas i)
+
+No building/ development activity shall be allowed in the bed of water bodies like river or nallah/ stormwater drain and in the Full Tank Level (FTL) of any lake, pond, tank or pond/ tank bed lands, ii)
+
+The above water bodies and courses shall be maintained as recreational/ green buffer zone, and no building activity other than recreational use, shall be carried out within: a)
+
+The Coastal Regulation Zone (CRZ) restricted area in case of areas along the sea coast, b)
+
+100 m from the river edge outside Municipal Corporation/ Municipal limits and 50 m within Municipal Corporation/ Municipal limits. No permanent constructions/ structures will be permitted within the above-mentioned buffer zone, c)
+
+50 m from the boundary of lakes of area 10 Ha and above, d)
+
+30 m from the boundary of lakes of area less than 10 Ha / ponds/ tank bed lands, e)
+
+12 m from the boundaries of major canal, stream, etc.,and f)
+
+2 m from the defined boundary of nallahs/ stormwater drains, etc. The above shall be in addition to the mandatory setbacks. Unless and otherwise stated, the area and the FTL of a lake/ pond shall be reckoned, as measured or given in the Survey of India topographical maps/Irrigation Department records/ Revenue records. The above buffer zone may be reckoned as part of the building setback. iii)
+
+Unless and otherwise specified in the Master Plan/Zonal Development Plan: a)
+
+The space to be left in and around the major canal/ stream (including the actual canal/ stream bed width and alignment) shall be minimum 12 m. This may be developed as Green Buffer/recreational and / or utilized for road of minimum 9 m width, wherever feasible, b)
+
+In case of lakes of area 10 Ha and above, in addition to development of recreational/ green belt along the foreshores of a lake, a ring road or promenade of minimum 12 m may be developed, wherever feasible; while in respect of foreshores of river, a river drive road of minimum 18 m may be developed in the said 50 m buffer zone, and c)
+
+The above greenery/landscaping and development shall conform to the guidelines and provisions of the NBC of India, 2005.
+
+• Minimum Setbacks and Height Stipulations for all Types of Non- High Rise Buildings (buildings below 15 m height, inclusive of stilt/ parking floor): i)
+
+A strip of at least 1 m greenery/lawn along the frontage of the site within the front setback shall be compulsorily developed and maintained with greenery and trees, ii)
+
+For plots above 200 sq m in addition to 1 m greenery / lawn along the front age of the site with the front setback, a minimum 1 m wide continuous green planting strip in the periphery on remaining sides are required to be developed and maintained as greenery and trees within the setback. Rainwater harvesting structures shall be provided in the prescribed manner within the setbacks, iii)
+
+For all residential/institutional/industrial plots above 750 sq m, in addition to 1 m greenery/ lawn on all four sides, 5 % of the site area has to be developed as tot lot/landscaped area and trees planted and maintained. Such organized open space could be in more than one location, shall be open to sky and shall be of a minimum width of 3 m, and iv)
+
+If the above greenery is not provided and maintained and rainwater harvesting structures are not provided, 10% of additional Property Tax every year would be imposed as penalty by the sanctioning authority, till the said condition is fulfilled.
+
+• Provision of Tot Lot and Greenery i)
+
+In every high rise building site, an organized open space which shall be utilized as greenery, tot lot or soft landscaping, etc. shall be provided over and above the mandatory open spaces to be left in and around the building. This space shall be at least 10% of total site area and shall be of a minimum width of 3 m. This may be in one or more pockets and shall be open to sky, ii)
+
+In addition to the above, a minimum 2 m wide green planting strip in the periphery on all sides within the setbacks are required to be developed and maintained with greenery and trees in all high rise building sites, and iii)
+
+Rainwater harvesting structures shall be provided in the prescribed manner within the setbacks.
+
+• Grant of Transferable Development Right:
+
+Grant of Transferable Development Right may be considered by the Competent Authority for the following areas subject to the owner complying with the conditions of development above, as per the following norms: for conservation and development of lakes/ water bodies/ nallahs/ stormwater drains, foreshores and recreational buffer development with greenery, open spaces earmarked in Master Plan, etc: equivalent to 50% of built up area of such area developed at his/ her cost.
+
+• Requirements of Group Development, Group Housing/ Cluster Housing/ Residential Enclaves and Row Housing Schemes.
+
+MoUD will play a key role in coordinating the efforts of the states regarding the compliance with Techno-Legal Regime by all the ULBs in their respective states. i)
+
+Review the present status and bring all states on par relating to making amendments to development control regulations and building byelaws on the basis of the recommendations of the Experts Committee, set up by MHA in 2004, ii)
+
+Issue guidelines for setting up a standing mechanism for a regular review to suggest periodic changes based on lessons learned and experiences and BMPs within and outside the country, iii)
+
+Issue guidelines for making the techno-legal framework as an essential part of technical capacity development at all levels of state governments and ULBs, besides all other stakeholders,
+
+Minimum of 10 % of site area shall be earmarked for organized open space and be utilized as greenery, tot lot or soft landscaping, etc. and shall be provided over and above the mandatory open spaces. This space may be in one or more pockets and shall be open to sky.
+
+• Incentives for Owners Leaving More Setbacks/ Installing Solar Heating and Lighting System/ Rain Water Harvesting/ Recycling of Waste Water
+
+An incentive of 10% rebate in Property Tax will be given by the local authority for owners or their successors-in- interest who undertake both recycling of waste water and rainwater harvesting structures.
+
+• The proposal shall comply with the provisions of other relevant regulations in force.
+
+• In case of buildings exceeding built up area of 1,50,000 sq m. No Objection Certificate from Central Pollution Control Board/MoEF is mandatory. iv)
+
+Prepare guidelines for mandatory third party compliance review of all land use and developmental plans, involving experts from local S&T and Academic institutions, v)
+
+Prepare necessary guidelines for evaluating cities/towns to be considered for annual awards for best record of compliance with techno-legal regime. Cities/ towns will be considered under different categories like metros with 4 million plus population, cities with one million plus (less than 4 million) population and cities with less than one million population. Besides, smaller municipalities should also be considered under two or three categories, vi)
+
+Review procedure for licensing architects, with emphasis on compliance with techno-legal regime, and vii)
+
+Sanction of new projects to States/UTs, linked to proper implementation of techno-legal regimes by the ULBs.
+
+[Action: MoUD/TCPO, States/UTs and ULBs]
+
+6.7 Urban Sprawl
+
+6.7.1 With increased urbanisation, more and more towns and cities are witnessing a change in the land use not only within the urban areas but also along the highways and in the immediate vicinity of the cites/towns. This dispersed development outside of compact urban and village centres along highways and in rural countryside is defined as urban sprawl.
+
+6.7.2 When rural pockets are connected to a city by a road, in the initial stages, development is concentrated along such roads in the form of service centres such as shops, dhabas, etc., which eventually become the hub of economic activities leading to the sprawl. This type of upsurge caused by a road network between urban/ semi-urban/ rural centres is very much prevalent and persistent in most places in India. These regions are devoid of any infrastructure, since planners are generally unable to visualise such growth patterns. This growth is normally left out in most government surveys including the census enumeration as this cannot be grouped under either urban or rural centre.
+
+Growth of urban sprawls will result in change in land-use and land cover with impacts such as loss of agricultural land, open space, and ecologically sensitive habitats. This will ultimately have future implications in terms of urban flooding. All such concerns will be addressed by the states on a priority basis. MoUD will review this with the states/UTs.
+
+Action: MoUD, States/UTs

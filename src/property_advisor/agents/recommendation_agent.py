@@ -1,4 +1,4 @@
-"""Agent 6: Recommendation Agent.
+"""Recommendation Agent (the only LLM agent in the graph).
 
 The one place in the graph where an LLM (Groq) exercises judgment: weighing
 deterministic investment metrics, risk assessment, and RAG-retrieved
@@ -25,7 +25,7 @@ import json
 
 from property_advisor.config import get_llm
 from property_advisor.logging_utils import timed_node
-from property_advisor.schemas import RecommendationOutput
+from property_advisor.schemas import EVIDENCE_METRICS, RecommendationOutput
 from property_advisor.state import PropertyState
 
 SYSTEM_PROMPT = """Indian real-estate Recommendation Agent. Output BUY, HOLD, or AVOID.
@@ -46,9 +46,9 @@ Guidance (lean, not rigid thresholds):
 yield, or high risk -- NOT merely because a leveraged buyer sees negative \
 monthly cash flow.
 
-Financing caveat: levered_cash_flow_negative=true means an 80%-LTV EMI exceeds \
-net rent. This is normal for Indian rentals (appreciation, not monthly cash \
-flow, drives most returns). Treat it as a confidence/risk caveat worth a \
+Financing caveat: levered_cash_flow_negative=true means the EMI (at the Loan \
+terms given below) exceeds net rent. This is normal for Indian rentals \
+(appreciation, not monthly cash flow, drives most returns). Treat it as a confidence/risk caveat worth a \
 mention -- it does NOT by itself justify AVOID, and a strong total return can \
 still warrant BUY.
 
@@ -56,7 +56,17 @@ Operating cash-flow rule (mandatory): cash_flow_severity="significantly_negative
 (the asset loses money even before financing) -> decision must be HOLD or AVOID \
 UNLESS strong_appreciation_evidence=true.
 
-Be concise. Max 2 sentences in justification, up to 3 supporting_evidence items."""
+Evidence: up to 3 supporting_evidence items, each {metric, cited_value, statement}. \
+metric must be one of: """ + ", ".join(EVIDENCE_METRICS) + """. cited_value must be \
+copied exactly from the Metrics/Risk/Market/Property data below (for rag_source: \
+the bracketed RAG filename). Every cited value is checked against the computed \
+data; anything else is rejected.
+
+Be concise. Max 2 sentences in justification."""
+
+
+# Structured evidence items need more room than the global default cap.
+RECOMMENDATION_MAX_TOKENS = 500
 
 
 def _format_rag_context(rag_context: list[dict], limit: int = 3, snippet_len: int = 220) -> str:
@@ -74,6 +84,7 @@ def _compact_metrics(metrics: dict) -> dict:
         "rental_yield_pct",
         "cap_rate_pct",
         "annual_cash_flow_inr",
+        "unlevered_annual_cash_flow_inr",
         "cash_flow_severity",
         "negative_cash_flow",
         "levered_cash_flow_negative",
@@ -131,7 +142,7 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
         # force a downgrade on leverage alone.
         confidence = round(confidence * 0.95, 2)
         justification = (
-            f"{justification} [Note: at 80% loan-to-value the EMI exceeds net rent (levered annual "
+            f"{justification} [Note: at {state.loan_to_value_pct:g}% loan-to-value the EMI exceeds net rent (levered annual "
             f"cash flow INR {metrics.get('annual_cash_flow_inr')}); Indian rentals typically rely on "
             f"appreciation rather than monthly cash flow, so this is a confidence caveat, not a "
             f"disqualifier.]"
@@ -147,7 +158,12 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
 
 @timed_node("recommendation_agent")
 def recommendation_agent(state: PropertyState) -> dict:
-    llm = get_llm()
+    if not state.property_data:
+        # Nothing to judge (address not found after data retries): skip the
+        # LLM call; the guardrail refuses an empty recommendation.
+        return {"recommendation": {}}
+
+    llm = get_llm(max_tokens=RECOMMENDATION_MAX_TOKENS)
     structured_llm = llm.with_structured_output(RecommendationOutput)
 
     feedback_note = ""
@@ -161,6 +177,7 @@ def recommendation_agent(state: PropertyState) -> dict:
 
     user_prompt = f"""Address: {state.property_address}
 Budget: INR {state.budget} | Horizon: {state.investment_horizon_years}yr | Strategy: {state.investment_strategy}
+Loan: {state.loan_to_value_pct:g}% LTV, {state.interest_rate_pct:g}% interest, {state.loan_tenure_years}yr tenure
 
 Property: {json.dumps({k: state.property_data.get(k) for k in ("city", "locality", "property_type", "price_inr", "area_sqft") if k in state.property_data})}
 Market: {json.dumps(state.market_data) if state.market_data else "none"}

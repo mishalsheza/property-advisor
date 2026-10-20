@@ -20,12 +20,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from langgraph.types import Command
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 # Now import from property_advisor (which is in src/)
 from property_advisor.config import API_HOST, API_PORT
 from property_advisor.graph import build_graph
 from property_advisor.report_generator import generate_reports
+from property_advisor.state import PropertyState
 
 # Set up directories
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
@@ -59,6 +60,9 @@ class AnalyzeRequest(BaseModel):
     budget: float = Field(..., gt=0)
     horizon: int = Field(default=5, gt=0, le=50)
     strategy: str = Field(default="rental")
+    ltv: float = Field(default=80.0, description="Loan-to-value in percent")
+    interest_rate: float = Field(default=9.0, description="Annual interest rate in percent")
+    tenure: int = Field(default=20, description="Loan tenure in years")
 
 
 class ApproveRequest(BaseModel):
@@ -87,6 +91,7 @@ def _pending_approval_payload(thread_id: str, interrupt_value: dict) -> dict:
         "investment_metrics": interrupt_value.get("investment_metrics", {}),
         "risk_assessment": interrupt_value.get("risk_assessment", {}),
         "guardrail_result": interrupt_value.get("guardrail_result", {}),
+        "unverified_claims": interrupt_value.get("unverified_claims", []),
     }
 
 
@@ -127,7 +132,14 @@ async def analyze(req: AnalyzeRequest) -> dict:
             "budget": req.budget,
             "investment_horizon_years": req.horizon,
             "investment_strategy": req.strategy,
+            "loan_to_value_pct": req.ltv,
+            "interest_rate_pct": req.interest_rate,
+            "loan_tenure_years": req.tenure,
         }
+        try:
+            PropertyState(**initial_state)
+        except ValidationError as exc:
+            raise HTTPException(status_code=422, detail=exc.errors(include_url=False, include_context=False)) from exc
 
         result = _invoke(config, initial_state)
 

@@ -1,0 +1,249 @@
+The Model Tenancy Act, 2021 — Legislative Brief, PRS Legislative Research, June 8, 2021.
+
+The Model Tenancy Act, 2021 was approved by the Union Cabinet on June 2, 2021. The Ministry of Housing and Urban Affairs had released the last draft Model Tenancy Act in October 2020.
+
+Highlights of the Bill
+- The Model Act requires the landlord and tenant to sign a written
+agreement which specifies the rent, period of tenancy and other related
+terms. Security deposit is capped at two months’ rent for residential
+premises, and six months’ rent for non-residential premises.
+- Conditions for eviction of tenant under the Model Act include: (i) refusal
+to pay agreed upon rent; (ii) failure to pay rent for more than two
+months; (iii) occupation of part or whole of premises without written
+consent; and (iv) misuse of premises despite a written notice.
+- The Model Act establishes a three-tier quasi-judicial dispute adjudication
+mechanism consisting of: (i) Rent Authority; (ii) Rent Court; and (iii) Rent
+Tribunal. No civil court will have jurisdiction over matters pertaining to
+provisions under the Model Act.
+- Rent Authorities and Rent Courts may be established by the District
+Collector with the approval of the state government. The state or union
+territory government may establish a Rent Tribunal after consulting with
+the jurisdictional High Court.
+Key Issues and Analysis
+- The Model Act may not resolve key issues in the rental housing sector
+that it seeks to address. Experts have recommended various reforms that
+are required to address issues such as availability, affordability, and the
+need to formalise the rental housing market.
+- The Model Act specifies minute details of what should be included in a
+rent agreement such as assigning responsibility for structural repairs and
+routine maintenance, and the maximum security deposit. It is unclear
+why a central legislation must include such details which may be
+mutually agreed upon by contracting parties when signing an agreement.
+- Registration of the rent agreements requires Aadhaar number to be
+submitted. Mandating submission of Aadhaar number to register a rent
+agreement may violate a Supreme Court judgement. Further, the
+Authority must upload the details of the agreement (and supporting
+documents) on a public portal. This may violate the right to privacy of
+the contracting parties.
+- The timeline for resolution of some disputes by adjudicatory bodies has
+not been specified in the Model Act. These include disputes on
+withholding essential services, revision of rent and contraventions by
+property managers.
+
+PART A: HIGHLIGHTS OF THE BILL
+Context
+Rental housing is regulated by states as land, land improvement, and control of rents falls under the State List of
+the Constitution.1 Post independence, states regulated rental housing through rent control laws. These laws
+specified a ceiling on the rental amount, and put conditions for eviction of the tenant, to prevent landlords from
+charging exorbitant rents and ensure that people found safe and stable housing. The 2015 draft Rental Housing
+Policy noted that these laws led to low rental yields, and disincentivised landlords from investing in rental
+properties.2 These also skewed arrangements towards tenants, made it difficuly to evict them, led to more
+litigation, and consequently eroded the trust of landlords in the regulatory system. 2,3 This led to the rental
+demand being serviced through other rental arrangements such as leave and license agreements.2
+Reforms in tenancy laws were first recommended at the central level under the Jawaharlal Nehru Urban
+Renewal Mission (JNNURM) in 2005.4 JNNURM listed the repeal of rent-control laws as a mandatory reform
+to access aid under the mission. States could formulate laws regulating rental housing on the Model Rent
+Legislation, 1992. However, as of 2020, 20 states continue to have rent control legislations.5,6,7,8,9,10,11,12 A few
+states such as Madhya Pradesh, Jharkhand, and Chattisgarh have repealed their rent control laws.13,14,15
+Rental housing is a predominantly urban phenomenon in India. As of 2013, 95% of households in rural areas
+live in self-owned housing.16 Globally, the demand for rental housing in urban areas is proportionate to the
+growth in the population living in urban areas. However, in India the trend has been different, which could be
+attributed to a policy push towards home ownership and low rental yields.2 Between 1951 and 2011, the urban
+population in India grew by six times and as of 2011, comprises 31% of the total population.2 However, the
+share of persons living in urban rental accommodation decreased from 58% to 27% between 1961 and 2011. 2
+Urban areas also face a significant housing shortage. As of 2012, the urban housing shortage was estimated to
+be at 1.9 crore units.17 Note that the urban population is estimated to increase to 43.7 crore by 2021.2 The draft
+National Urban Rental Housing Policy, 2015 noted that the housing shortage in urban areas will not be solved
+by home ownership, and suggested promoting rental housing. It recommended repeal of existing rent-control
+laws and adoption of a new rental framework based on the draft Model Tenancy Act, 2015. 2 So far, Tamil Nadu
+has enacted a law regulating tenancy based on the 2015 Model Act.18 The Ministry of Housing and Urban
+Affairs had released another draft version of the Model Act in October 2020 for public feedback.
+The Model Tenancy Act, 2021 was approved by the Union Cabinet on June 2, 2021 for adoption by states and
+union territories. It seeks to: (i) establish a speedy adjudication mechanism for dispute resolution, (ii) regulate
+renting of premises, and (iii) protect interests of landlords and tenants.
+
+Key Features
+Conditions for tenancy, eviction, and sub-letting
+- Tenancy agreement: The Model Act states that to rent any premises, a written agreement must be signed
+between the landlord and the tenant. The agreement must specify: (i) the rent payable, (ii) the time period
+for the tenancy, (iii) terms and period for revision of rent, (iv) the security deposit to be paid in advance, (v)
+reasonable causes for entry of landlord into the premises, and (vi) responsibilities to maintain premises.
+The Rent Authority must be intimated about the agreement within two months from the date of agreement.
+This will apply to all premises used for residential, commercial, and educational purposes.
+- Security deposit: The security deposit may not exceed: (i) two months’ rent for residential premises, and
+(ii) six-months’ rent for non-residential premises. The security deposit will be refunded by the landlord to
+the tenant at the time of taking over vacant possession of the premises, after making due deductions.
+- Tenancy period: The tenant may request the landlord for renewal or extension of the tenancy period. The
+tenant will be liable to pay enhanced rent if: (i) a tenancy period has ended and not been renewed, or (ii) the
+tenant fails to vacate the premises at the end of such tenancy. If the tenant fails to vacate the premises at the
+end of tenancy, or on termination of tenancy by an order, he will be liable to pay: (i) twice the monthly rent
+for the first two months and, (ii) four times the monthly rent subsequently till he occupies the premises.
+- Eviction: To evict a tenant, the landlord must apply to the Rent Authority seeking such eviction. The
+Authority may make an order for eviction on certain grounds including : (i) refusal to pay the agreed rent;
+(ii) failure to pay rent for more than two months; (iii) parting of possession of part or whole of premises
+without written consent of landlord; (iv) misuse of premises even after receiving written notices to desist
+from such misuse; and (v) structural change by tenant without written consent.
+- Sub-letting: Under the Model Act, sub-letting is prohibited unless allowed through a supplementary
+agreement. The landlord and tenant must jointly inform the Rent Authority about the sub-tenancy within
+two months from the date of execution of such agreement.
+
+Dispute adjudication mechanism
+- The Model Act proposes to establish a three-tier quasi-judicial mechanism for adjudication of disputes
+(Table 1). Rent Authorities and Rent Courts will be appointed by the District Collector with the approval of
+the state government. The state government may establish a Rent Tribunal in each district after consulting
+with the jurisdictional High Court. No civil court will have jurisdiction over matters pertaining to
+provisions under the Model Act.
+Table 1: Functions of quasi-judicial bodies proposed under Model Tenancy Act, 2020
+Authority | Headed by | Functions
+- Put up a digital platform to enable submission of tenancy related documents as specified
+- Provide a unique identification number to the parties to the tenancy agreement, and
+upload details of the agreement within a week of receiving details
+- Resolve disputes with regard to revision of rent, and determine revised rates in such cases
+Rent | - Accept rent for up to two months when rent is not accepted by landlord, or if the tenant
+Deputy Collector
+Authority | cannot decide whom the rent is payable to; also conduct enquiries in such cases on
+whom the rent is payable to
+- Remove or penalise property manager if he acts in contravention of the Act or against the
+instructions of the landlord
+- Pass interim orders to restore supply of essential services and award compensation
+Additional Collector, or - Adjudicate appeals against the Rent Authority’s orders
+Rent
+Additional District | - Order for eviction and recovery of possession of premises
+Court
+Magistrate
+Rent | District Judge, or | - Adjudicate appeals against the Rent Court’s orders
+Tribunal Additional District Judge
+
+- The Model Act specifies the procedure for examination of cases and judicial conduct by Rent Courts and
+Rent Tribunals. It also specifies timelines for adjudication of certain cases by all three authorities (Table 2).
+Table 2: Timelines for adjudication of cases under Model Tenancy Act, 2020
+Timeline | Type of Case
+- Occupation of whole or part of premises without written consent of landlord
+30 days after filing of application
+- Misuse of premises even after receipt of notice to desist by landlord
+60 days after filing of application - Appeals to Rent Court and Rent Tribunal
+- Refusal to pay agreed upon rent
+- Failure to pay rent for two consecutive months or more
+- For carriage of necessary repairs, construction, rebuilding or demolition,
+90 days after filing of application - In case of change in land use
+- Failure to vacate premises after written notice, in case where landlord would seriously suffer if
+not in its possession
+- Death of landlord and bonafide requirement of premises for his legal heirs
+
+PART B: KEY ISSUES AND ANALYSIS
+Purpose of the Model Act
+A background note on the draft Model Act, 2020 had highlighted some issues the Model Act would address.19
+These include: (i) balancing interests and rights of the landlord and tenant, (ii) creating adequate and affordable
+rental housing stock, (iii) enabling formalisation of the rental housing market, (iv) encouraging private
+participation in the sector, and (v) unlocking vacant premises for rental purposes. It may be argued that the
+Model Act will not adequately address all these issues. On the other hand, the Model Act goes into minute
+details of what a rental agreement must include, which may not be necessary in a law.
+Model Act may not address challenges in the rental housing market
+The Model Act proposes a regulatory framework for rental housing. While experts have highlighted that
+changes in the legislative framework are needed to reform the housing market, various other issues also need to
+be addressed to reform the market.2,3,20 These include:
+- Lack of Rental Housing Policy: The draft National Rental Housing Policy (2015) states that a
+comprehensive policy must be formulated to guide the role of central and state governments to sustainably
+grow rental housing and make it inclusive.2 Such a policy can guide government interventions to increase
+supply and regulate demand. However, the draft policy has not been adopted yet. The Model Tenancy Act,
+2021 is only one of the proposed reforms under the draft Policy. Other reforms include measures to
+increase affordability, promote shelter facilities, incentivise market-driven rental housing and facilitate
+investments through financial instruments.2
+- Affordability: About 96% of the urban housing shortage pertains to the Economically Weaker Sections
+(EWS) and Lower Income Group (LIG) categories.17 The draft National Urban Rental Housing Policy,
+2015 states that existing government initiatives, subsidies and reforms have been directed towards making
+home-ownership affordable. However, persons from EWS and LIG have low disposable or irregular
+income, and thus can often not afford to own homes even after government subsidies and incentives. The
+draft policy further states that efforts of the public sector alone will be inadequate in addressing the issue of
+affordability and lists interventions including the following to address the issue of affordability: (i)
+provision of incentives such as tax exemptions and subsidies to tenants and home owners, (ii) encouraging
+public-private partnerships and residential rental management companies, and (iii) enhancing access to
+finance within the EWS and LIG sectors.2
+- Informal rental housing market: The NSSO (2008-09) estimated that only 5% of rental dwellings were
+rented through formal agreements.16 The draft National Rental Housing Policy (2015) recognised that
+existing rent-control legislation has made rental housing economically unattractive and increased
+informalisation and unrecorded arrangements in the market.2 However, the draft Policy states that to
+decrease the prevalence of informal agreements, other measures need to be adopted. These include use of
+IT enabled platforms to decrease transaction costs, simplification of the registration process in a time-bound
+manner and facilitation of online registration of properties. 2
+- Vacant housing stock: The National Commission on Urbanisation (1988) noted that there was significant
+vacant housing stock in urban areas. It recommended taking curative steps to prevent landlords from
+keeping houses vacant.21 According to the 2011 Census, 1.1 crore houses are vacant in urban areas. 16 The
+draft National Rental Housing Policy (2015) states that possible reasons for this may be low rental yield,
+fear of repossession among landlords, and lack of incentives. 2
+Model Act specifies minute details of a rental agreement
+The background note to the draft Model Act, 2020 stated that it seeks to balance the tenant-landlord
+relationship.19 The 2021 Model Act seeks to provide for rights and duties of both parties, mandate the use of
+registered agreements and give statutory backing to some provisions. It also provides details of: (i) when a
+tenant may be evicted by a landlord, (ii) heirship in case of death of a landlord, and (iii) legal remedies available
+with both the tenant and the landlord in case either one violates the agreement.
+However, the 2021 Model Act also goes into minute details of a rental agreement. Some examples include: (i)
+the landlord must carry out structural repairs and whitewashing of walls and doors, (ii) tenants must be
+responsible for drain cleaning, geyser repairs, repairing kitchen fixtures, and (iii) the maximum amount of
+security deposit. Typically, such details are specified in rent agreements, as seen in existing state legislations,
+including those for Maharashtra, Karnataka, and West Bengal.5,6,12 It may not be necessary for a model central
+legislation to specify these details. Providing these details in the law may also restrict changes that contracting
+parties may want to make in a contract based on their specific situation.
+However, note that the Model Act is only a suggestive framework for states to follow while regulating rental
+housing and agreements. Since housing is a part of the State List under the Seventh Schedule of the Indian
+Constitution, the efficacy of the Model Act depends on its adoption by states. So far, previous versions of the
+Model Act have not been adopted by most of the states.
+
+Aadhaar number compulsory to register agreements with Rent Authority
+Mandating Aadhaar to register agreements may violate Puttaswamy judgement
+Clause: 4, 40; The Model Act requires all landlord and tenants to intimate the Rent Authority about a rental agreement within
+First Schedule
+two months from the date of agreement. Information about the agreement must be given with a form specified
+in a Schedule to the Act. The prescribed form requires both the tenant and the landlord to submit their Aadhaar
+numbers and attach self-attested copies of the card with the form. This may violate the Supreme Court’s 2018
+Puttaswamy judgement.22 In its judgement, the Court had ruled that requiring Aadhaar card or number may
+only be made mandatory for expenditure on a subsidy, benefit or service incurred from the Consolidated Fund
+of India. Based on this principle, the Court had struck down the mandatory linking of bank accounts with
+Aadhaar number. Since registering a tenancy agreement carries no benefits or services from the state for which
+an expenditure has to be incurred from the Consolidated Fund of India, making Aadhaar number mandatory for
+registering a tenancy may violate the judgement.
+
+Uploading details of tenancy agreements may violate right to privacy
+The Model Act also states that on registration with the Rent Authority, the parties will be provided a unique
+identification number, and details of the rental agreement (along with other documents) will be uploaded on the
+Authority’s website. It is unclear if personal details of the parties such as PAN number, Aadhaar number,
+among others, which must be submitted along with the agreement, will also be made available publicly. If these
+are shared on the website, this may violate the right to privacy of the involved parties. The Supreme Court has
+included the right to privacy as a fundamental right. This right may be infringed only if three conditions are
+met: (i) there is a law, (ii) the law achieves a public purpose, and (iii) the public purpose is proportionate to the
+violation of privacy.23 Information such as the number of properties on rent, and the rental yield from properties
+may be useful for formulating policies and understanding the development of the real estate market. However,
+sharing personal information of individuals may not serve a public purpose, and hence may violate the right to
+privacy of such individuals.
+
+No time limit specified for resolution of some disputes
+Clause: 10, The preamble of the 2021 Model Act and the background note accompanying the 2020 draft Model Act state
+19(2), 20 that it seeks to establish a speedy adjudication mechanism for disputes linked to tenancy agreements. The
+Model Act specifies the timelines for resolution of cases linked with eviction and payment of rent. For instance,
+in case of continued misuse of property by the tenant even after a notice to desist by the landlord, applications
+made to the Rent Court must be addressed by the Court within 30 days. However, timelines have not been
+specified for certain cases. These include:
+- Essential Services: In case a landlord or property manager is found withholding essential supplies or
+services in premises occupied by the tenant, the Rent Authority may issue orders for resumption of services
+and impose penalty. The Model Act defines a property manager as any legal entity authorised by the
+landlord to manage premises with duties including rent collection, periodic inspection and maintenance.
+While the Rent Authority must complete inquiries on the case within one month, under the Model Act,
+there is no timeline specified within which the case must be resolved by the Rent Authority.
+- Revision of rent: The Rent Authority may determine revised rent after receiving an application by the
+landlord or tenant. However, the Model Act does not specify a timeline within which the Rent Authority
+must resolve a dispute on revision of rent.
+- Contraventions by property manager: The landlord or tenant may approach the Rent Authority in case
+the property manager violates duties specified or specific instructions by the landlord. The Rent Authority
+may choose to remove the property manager or impose a fine to compensate for losses incurred. However,
+the Model Act does not specify a timeline within which the Rent Authority must adjudicate and resolve
+cases around violations by a property manager.

@@ -78,7 +78,7 @@ def _cash_flow_severity(annual_cash_flow_inr: float, price_inr: float) -> str:
 
     IMPORTANT: this must be fed the *unlevered* (operating) cash flow, not the
     fully-leveraged figure. Indian gross rental yields (~2-6%) never cover an
-    80%-LTV EMI, so a leveraged cash flow is deeply negative for essentially
+    80%-LTV (default) EMI, so a leveraged cash flow is deeply negative for essentially
     every property — using it here mislabels the entire market as
     "significantly_negative" and is what previously biased recommendations
     toward AVOID. The operating cash flow reflects whether the asset itself is
@@ -120,7 +120,7 @@ def compute_investment_metrics(
     interest_rate_pct: float = DEFAULT_INTEREST_RATE_PCT,
     loan_tenure_years: int = DEFAULT_LOAN_TENURE_YEARS,
 ) -> dict[str, Any]:
-    """Aggregate all deterministic investment metrics for the Investment Metrics Agent."""
+    """Aggregate all deterministic investment metrics for the financial calculation step."""
     price_inr = float(property_data.get("price_inr", budget) or budget)
     area_sqft = float(property_data.get("area_sqft", 0) or 0)
     rent_per_sqft = float(market_data.get("avg_monthly_rent_per_sqft_inr", 0) or 0)

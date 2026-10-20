@@ -294,7 +294,7 @@
 
 <header>
   <h1>Property Alpha AI</h1>
-  <p>Multi-agent investment analysis for Indian real estate</p>
+  <p>AI-assisted investment analysis for Indian real estate</p>
 </header>
 
 <main>
@@ -437,7 +437,7 @@
     approveBtn.disabled = loading;
     rejectBtn.disabled = loading;
     statusEl.innerHTML = loading
-      ? `<span class="spinner"></span>${message || "Running multi-agent analysis... this can take 10-30 seconds."}`
+      ? `<span class="spinner"></span>${message || "Running analysis... this can take 10-30 seconds."}`
       : "";
   }
 
@@ -485,7 +485,7 @@
     } else {
       evidence.forEach((e) => {
         const li = document.createElement("li");
-        li.textContent = e;
+        li.textContent = e.statement;
         evidenceList.appendChild(li);
       });
     }
@@ -525,12 +525,12 @@
   function renderRefused(report) {
     resultsEl.style.display = "block";
     currentThreadId = null;
-    setStatusBanner("Refused by Guardrail Agent — no valid recommendation to approve.", "warning");
+    setStatusBanner("Refused by the guardrail — no valid recommendation to approve.", "warning");
     document.getElementById("decisionCard").className = "decision-card AVOID";
     document.getElementById("decisionLabel").textContent = "REFUSED";
     document.getElementById("decisionConfidence").textContent = "";
     document.getElementById("decisionJustification").textContent =
-      report.reason || "The Guardrail Agent refused this recommendation.";
+      report.reason || "The guardrail refused this recommendation.";
     document.getElementById("metricRisk").textContent = "—";
     document.getElementById("metricRoi").textContent = "—";
     document.getElementById("metricYield").textContent = "—";

@@ -1,6 +1,6 @@
-"""Agent 2: Market Trends Agent.
+"""Step 2: Market lookup.
 
-Deterministic, tool-based: retrieves city/locality appreciation and
+Deterministic step (no LLM): retrieves city/locality appreciation and
 demand/supply trends from the Market Data Tool.
 """
 
@@ -11,8 +11,8 @@ from property_advisor.state import PropertyState
 from property_advisor.tools.market_data_tool import get_market_data
 
 
-@timed_node("market_agent")
-def market_agent(state: PropertyState) -> dict:
+@timed_node("market_lookup_step")
+def market_lookup_step(state: PropertyState) -> dict:
     city = state.property_data.get("city", "")
     locality = state.property_data.get("locality", "")
     slug = state.property_data.get("locality_slug")

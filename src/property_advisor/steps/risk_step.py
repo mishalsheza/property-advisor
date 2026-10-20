@@ -1,6 +1,6 @@
-"""Agent 5: Risk Assessment Agent.
+"""Step 5: Risk scoring.
 
-Deterministic, tool-based aggregation of vacancy/crime/flood/regulatory/
+Deterministic step (no LLM): aggregates vacancy/crime/flood/regulatory/
 market-volatility risk into a single 0-100 risk_score. Sets
 requires_human_review when risk_score exceeds the configured threshold,
 implementing Risk-Based Routing.
@@ -14,8 +14,8 @@ from property_advisor.state import PropertyState
 from property_advisor.tools.risk_data_tool import compute_risk_score, get_risk_data
 
 
-@timed_node("risk_assessment_agent")
-def risk_assessment_agent(state: PropertyState) -> dict:
+@timed_node("risk_scoring_step")
+def risk_scoring_step(state: PropertyState) -> dict:
     slug = state.property_data.get("locality_slug")
     risk_data = get_risk_data(slug)
     risk_assessment = compute_risk_score(risk_data)

@@ -1,10 +1,10 @@
 """LangGraph wiring: nodes, conditional routing, and human-in-the-loop.
 
-Workflow :
+Workflow (1 LLM agent; every other node is a deterministic step):
 
-    property_agent -> market_agent -> [retry gate] -> rag_agent
-      -> investment_metrics_agent -> risk_assessment_agent
-      -> recommendation_agent -> guardrail_agent
+    parse_address_step -> market_lookup_step -> [retry gate] -> rag_retrieval_step
+      -> financial_calc_step -> risk_scoring_step
+      -> recommendation_agent -> guardrail_step
       -> [refuse -> final_report] | [request_reanalysis -> recommendation_agent]
       -> human_review -> [approved -> final_report] | [rejected -> recommendation_agent]
       -> final_report -> END
@@ -21,16 +21,16 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
-from property_advisor.agents.guardrail_agent import guardrail_agent
-from property_advisor.agents.market_agent import market_agent
-from property_advisor.agents.metrics_agent import investment_metrics_agent
-from property_advisor.agents.property_agent import property_agent
-from property_advisor.agents.rag_agent import rag_agent
 from property_advisor.agents.recommendation_agent import recommendation_agent
-from property_advisor.agents.risk_agent import risk_assessment_agent
 from property_advisor.config import MAX_DATA_RETRIES
 from property_advisor.logging_utils import timed_node, traced_router
 from property_advisor.state import PropertyState
+from property_advisor.steps.address_step import parse_address_step
+from property_advisor.steps.financial_step import financial_calc_step
+from property_advisor.steps.guardrail_step import guardrail_step
+from property_advisor.steps.market_step import market_lookup_step
+from property_advisor.steps.rag_step import rag_retrieval_step
+from property_advisor.steps.risk_step import risk_scoring_step
 
 
 def data_retry_increment_node(state: PropertyState) -> dict:
@@ -63,6 +63,7 @@ def human_review_node(state: PropertyState) -> dict:
         "investment_metrics": state.investment_metrics,
         "risk_assessment": {k: v for k, v in state.risk_assessment.items() if k != "raw_indicators"},
         "guardrail_result": state.guardrail_result,
+        "unverified_claims": state.unverified_claims,
     }
     decision = interrupt(payload)
     return {"human_decision": decision}
@@ -79,7 +80,10 @@ def final_report_node(state: PropertyState) -> dict:
         report = {
             "status": "refused",
             "property_address": state.property_address,
-            "reason": "Guardrail Agent refused this recommendation: no valid decision/justification was produced.",
+            "reason": "Guardrail refused this recommendation: "
+            + ("no property data was found for this address."
+               if state.guardrail_result.get("missing_property_data")
+               else "no valid decision/justification was produced."),
             "guardrail_result": state.guardrail_result,
         }
         return {"final_report": report, "workflow_status": "refused"}
@@ -96,6 +100,7 @@ def final_report_node(state: PropertyState) -> dict:
         "investment_metrics": state.investment_metrics,
         "risk_assessment": {k: v for k, v in state.risk_assessment.items() if k != "raw_indicators"},
         "guardrail_result": state.guardrail_result,
+        "unverified_claims": state.unverified_claims,
         "human_decision": state.human_decision,
         "evidence_sources": [r["source"] for r in state.rag_context],
     }
@@ -105,31 +110,31 @@ def final_report_node(state: PropertyState) -> dict:
 def build_graph():
     graph = StateGraph(PropertyState)
 
-    graph.add_node("property_agent", property_agent)
-    graph.add_node("market_agent", market_agent)
+    graph.add_node("parse_address_step", parse_address_step)
+    graph.add_node("market_lookup_step", market_lookup_step)
     graph.add_node("data_retry_increment", data_retry_increment_node)
-    graph.add_node("rag_agent", rag_agent)
-    graph.add_node("investment_metrics_agent", investment_metrics_agent)
-    graph.add_node("risk_assessment_agent", risk_assessment_agent)
+    graph.add_node("rag_retrieval_step", rag_retrieval_step)
+    graph.add_node("financial_calc_step", financial_calc_step)
+    graph.add_node("risk_scoring_step", risk_scoring_step)
     graph.add_node("recommendation_agent", recommendation_agent)
-    graph.add_node("guardrail_agent", guardrail_agent)
+    graph.add_node("guardrail_step", guardrail_step)
     graph.add_node("human_review", human_review_node)
     graph.add_node("final_report", final_report_node)
 
-    graph.add_edge(START, "property_agent")
-    graph.add_edge("property_agent", "market_agent")
+    graph.add_edge(START, "parse_address_step")
+    graph.add_edge("parse_address_step", "market_lookup_step")
     graph.add_conditional_edges(
-        "market_agent",
+        "market_lookup_step",
         route_after_market,
-        {"retry": "data_retry_increment", "continue": "rag_agent"},
+        {"retry": "data_retry_increment", "continue": "rag_retrieval_step"},
     )
-    graph.add_edge("data_retry_increment", "property_agent")
-    graph.add_edge("rag_agent", "investment_metrics_agent")
-    graph.add_edge("investment_metrics_agent", "risk_assessment_agent")
-    graph.add_edge("risk_assessment_agent", "recommendation_agent")
-    graph.add_edge("recommendation_agent", "guardrail_agent")
+    graph.add_edge("data_retry_increment", "parse_address_step")
+    graph.add_edge("rag_retrieval_step", "financial_calc_step")
+    graph.add_edge("financial_calc_step", "risk_scoring_step")
+    graph.add_edge("risk_scoring_step", "recommendation_agent")
+    graph.add_edge("recommendation_agent", "guardrail_step")
     graph.add_conditional_edges(
-        "guardrail_agent",
+        "guardrail_step",
         route_after_guardrail,
         {"reanalyze": "recommendation_agent", "refuse": "final_report", "human_review": "human_review"},
     )

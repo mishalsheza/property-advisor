@@ -36,7 +36,7 @@ def get_property_data(address: str) -> dict[str, Any]:
     """Look up property details by matching keywords in the address.
 
     Returns an empty dict if no match is found, signaling missing data to
-    the calling agent (used to drive the missing-data retry routing).
+    the calling step (used to drive the missing-data retry routing).
     """
     normalized = address.lower()
     for slug, record in _PROPERTIES.items():

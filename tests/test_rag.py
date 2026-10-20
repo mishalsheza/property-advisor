@@ -1,44 +1,53 @@
-"""Test RAG retrieval for property addresses."""
+"""Retrieval tests against the real RAG corpus and Chroma index.
 
-import sys
+Uses ChromaDB's local embedding model (downloaded once on first use); no LLM.
+"""
+
 import os
-from pathlib import Path
 
-# Get the project root (where src/ is located)
-project_root = Path(__file__).parent.parent  # Go up from tests/ to root
-src_path = project_root / "src"
+import pytest
 
-# Add src to Python path
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
-
-# Also add project root
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
-# Now import without "src." prefix
-from property_advisor.agents.rag_agent import rag_agent
+from property_advisor.config import RAG_TOP_K
 from property_advisor.state import PropertyState
+from property_advisor.steps.rag_step import rag_retrieval_step
+from property_advisor.tools.rag_tool import _CORPUS_DIR, query_rag
 
-def test_rag():
-    """Test RAG retrieval."""
-    print("Testing RAG...")
-    
-    # Create state
+LTV_SOURCES = {
+    "rbi_housing_finance_master_circular_2014.txt",
+    "rbi_ltv_circular_2012.txt",
+    "rbi_ltv_riskweights_circular_2015.txt",
+}
+
+# query -> sources of which at least one must appear in the top RAG_TOP_K chunks
+EXPECTED_SOURCES = {
+    "maximum home loan for a 60 lakh flat": LTV_SOURCES,
+    "flood risk in a low-lying area": {"ndma_urban_flooding_excerpt.txt"},
+    "security deposit limit for a rented flat": {"model_tenancy_act_2021_prs.txt"},
+    "tax deduction on home loan interest for a let-out property": {"income_tax_house_property.txt"},
+    "is RERA registration mandatory for a new project": {"rera_act_2016_explainer.txt"},
+}
+
+
+@pytest.mark.parametrize("query,expected", EXPECTED_SOURCES.items())
+def test_query_retrieves_expected_source(query, expected):
+    sources = [r["source"] for r in query_rag(query)]
+    assert len(sources) == RAG_TOP_K
+    assert expected & set(sources), f"{query!r} retrieved {sources}"
+
+
+def test_corpus_contains_only_cleaned_sources():
+    txt_files = {f for f in os.listdir(_CORPUS_DIR) if f.endswith(".txt")}
+    assert "hinjewadi_bullish_analyst_note.txt" not in txt_files
+    assert set().union(*EXPECTED_SOURCES.values()) <= txt_files
+
+
+def test_rag_step_returns_deduplicated_context():
     state = PropertyState(
         property_address="Whitefield, Bangalore, 560066",
-        budget=9500000,
-        investment_horizon_years=5,
-        investment_strategy="rental"
+        budget=9_500_000,
+        property_data={"city": "Bangalore", "locality": "Whitefield"},
     )
-    
-    # Run RAG agent
-    result = rag_agent(state)
-    rag_context = result.get('rag_context', [])
-    
-    print(f"Found {len(rag_context)} documents")
-    for doc in rag_context[:3]:
-        print(f"  - {doc.get('source', 'Unknown')}")
-
-if __name__ == "__main__":
-    test_rag()
+    rag_context = rag_retrieval_step(state)["rag_context"]
+    sources = [r["source"] for r in rag_context]
+    assert sources
+    assert len(sources) == len(set(sources))

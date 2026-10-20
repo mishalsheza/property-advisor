@@ -16,9 +16,12 @@ sys.path.insert(0, "src")
 
 from langgraph.types import Command  # noqa: E402
 
+from pydantic import ValidationError  # noqa: E402
+
 from property_advisor.config import AUTO_APPROVE_HUMAN_REVIEW  # noqa: E402
 from property_advisor.graph import build_graph  # noqa: E402
 from property_advisor.report_generator import generate_reports  # noqa: E402
+from property_advisor.state import PropertyState  # noqa: E402
 
 DEMO_CASES = [
     {
@@ -61,6 +64,11 @@ def parse_args() -> argparse.Namespace:
         choices=["rental", "flip", "long_term_appreciation"],
         default="rental",
     )
+    parser.add_argument("--ltv", type=float, default=80.0, help="Loan-to-value in percent (0-90, default 80)")
+    parser.add_argument(
+        "--interest-rate", type=float, default=9.0, help="Annual home-loan interest rate in percent (default 9)"
+    )
+    parser.add_argument("--tenure", type=int, default=20, help="Loan tenure in years (1-30, default 20)")
     parser.add_argument(
         "--auto-approve",
         action="store_true",
@@ -140,7 +148,14 @@ def run_single(args: argparse.Namespace) -> None:
         "budget": budget,
         "investment_horizon_years": args.horizon,
         "investment_strategy": args.strategy,
+        "loan_to_value_pct": args.ltv,
+        "interest_rate_pct": args.interest_rate,
+        "loan_tenure_years": args.tenure,
     }
+    try:
+        PropertyState(**initial_state)
+    except ValidationError as exc:
+        sys.exit(f"Invalid input:\n{exc}")
 
     final_report = run_pipeline(graph, initial_state, args.thread_id, args.auto_approve)
 

@@ -1,8 +1,8 @@
-"""Agent 1: Property Analysis Agent.
+"""Step 1: Address parsing and property lookup.
 
-Deterministic, tool-based: parses the Indian address and retrieves property
-details from the Property Data Tool. No LLM call — to prefer deterministic workflows and keep business logic out of
-prompts wherever a reliable tool can do the job.
+Deterministic step (no LLM): parses the Indian address and retrieves property
+details from the Property Data Tool, keeping business logic out of prompts
+wherever a reliable tool can do the job.
 """
 
 from __future__ import annotations
@@ -12,8 +12,8 @@ from property_advisor.state import PropertyState
 from property_advisor.tools.property_data_tool import get_property_data
 
 
-@timed_node("property_agent")
-def property_agent(state: PropertyState) -> dict:
+@timed_node("parse_address_step")
+def parse_address_step(state: PropertyState) -> dict:
     property_data = get_property_data(state.property_address)
 
     errors = list(state.errors)

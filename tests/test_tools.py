@@ -115,3 +115,24 @@ def test_investment_metrics_handles_missing_market_data_without_crashing():
     metrics = compute_investment_metrics(property_data, {}, budget=3_500_000, horizon_years=5)
     assert metrics["rental_yield_pct"] == 0.0
     assert metrics["data_quality_confidence"] < 1.0
+
+
+def test_loan_inputs_default_and_flow_into_metrics():
+    import pytest
+    from pydantic import ValidationError
+
+    from property_advisor.state import PropertyState
+    from property_advisor.steps.financial_step import financial_calc_step
+
+    state = PropertyState(property_address="Whitefield, Bangalore", budget=9_500_000)
+    assert (state.loan_to_value_pct, state.interest_rate_pct, state.loan_tenure_years) == (80.0, 9.0, 20)
+
+    state = state.model_copy(update={"property_data": get_property_data("Whitefield, Bangalore")})
+    default_emi = financial_calc_step(state)["investment_metrics"]["loan_assumptions"]["monthly_emi_inr"]
+    lower = state.model_copy(update={"loan_to_value_pct": 50.0})
+    lower_emi = financial_calc_step(lower)["investment_metrics"]["loan_assumptions"]["monthly_emi_inr"]
+    assert lower_emi < default_emi
+
+    for bad in ({"loan_to_value_pct": 95}, {"interest_rate_pct": 0}, {"loan_tenure_years": 40}):
+        with pytest.raises(ValidationError):
+            PropertyState(property_address="x", budget=1, **bad)
