@@ -37,7 +37,7 @@ def run_scenario(graph, scenario) -> dict:
     return graph.invoke(scenario.input, config, interrupt_before=interrupt_before)
 
 
-def _state_for(slug: str, metric_overrides: dict) -> PropertyState:
+def _state_for(slug: str, metric_overrides: dict, interest_rate_pct: float = 9.0) -> PropertyState:
     """State as the deterministic steps would compute it for a mock property."""
     property_data = {**PROPERTIES[slug], "locality_slug": slug}
     # the real market step, so HPI appreciation (or the labelled fallback) applies
@@ -46,7 +46,9 @@ def _state_for(slug: str, metric_overrides: dict) -> PropertyState:
     )["market_data"]
     raw_risk = get_risk_data(slug)
     risk = {**compute_risk_score(raw_risk), "raw_indicators": raw_risk}
-    metrics = compute_investment_metrics(property_data, market_data, property_data["price_inr"], 5)
+    metrics = compute_investment_metrics(
+        property_data, market_data, property_data["price_inr"], 5, interest_rate_pct=interest_rate_pct
+    )
     return PropertyState(
         property_address=f"{property_data['locality']}, {property_data['city']}",
         budget=property_data["price_inr"],
@@ -54,11 +56,12 @@ def _state_for(slug: str, metric_overrides: dict) -> PropertyState:
         market_data=market_data,
         investment_metrics={**metrics, **metric_overrides},
         risk_assessment=risk,
+        interest_rate_pct=interest_rate_pct,
     )
 
 
 def run_safety_net_case(case) -> dict:
-    state = _state_for(case.slug, case.metric_overrides)
+    state = _state_for(case.slug, case.metric_overrides, case.interest_rate_pct)
     forced = RecommendationOutput(**case.forced)
     recommendation = rec_module._enforce_cashflow_safety_net(forced, state).model_dump()
     guardrail = guardrail_step(state.model_copy(update={"recommendation": recommendation}))

@@ -95,30 +95,59 @@ wrong-direction phrasings, not every possible one.
   `strong_appreciation_evidence` is true (6 properties: Dwarka, Kothrud, Thane West, Dadar,
   Andheri West, Worli).
 
-**Rule checks (6 of 7 active):** missing property data (→ refuse), missing market data,
+**Hurdle-rate rule.** If IRR on equity is below `HURDLE_RATE_PCT` (unset = the loan
+interest rate, i.e. the cost of debt) the leverage destroys value: BUY is downgraded to
+HOLD, or AVOID if IRR < 0, and the note "Leverage destroys value: IRR X% < cost of debt Y%"
+is always added (justification and guardrail notes; the UI shows "below/above Y% cost of
+debt" under the IRR tile). The model is told the rule and gets `hurdle_rate_pct`,
+`irr_minus_hurdle_pct` and `irr_below_hurdle`. At the default 9% it applies to 23 of the 34
+mock properties with market data (e.g. Whitefield: IRR 8.84% → HOLD; at
+`--interest-rate 8` its IRR is 10.65% > 8% and BUY is possible). It runs before the
+leverage cap, and every property above the 70% shortfall level currently has a negative
+IRR.
+
+**Rule checks (7 of 8 active):** missing property data (→ refuse), missing market data,
 risk score above threshold, negative operating cash flow, shortfall after EMI above the
-leverage threshold, confidence below threshold. The seventh, the conflicting-evidence
-check, is **disabled**: it matched two AI-written Hinjewadi analyst notes that are no
+leverage threshold, IRR below the hurdle rate, confidence below threshold. The eighth, the
+conflicting-evidence check, is **disabled**: it matched two AI-written Hinjewadi analyst notes that are no
 longer in the corpus and needs redesigning for real documents.
 
 **Cash-flow terms.** *Operating cash flow* = rent − 25% operating expenses, before the loan
 (`operating_cash_flow_inr`). *Cash flow after EMI* = operating cash flow − 12 × EMI
 (`cash_flow_after_emi_inr`; the older `annual_cash_flow_inr` is the same figure). *Total
-return on price over N years* (the original ROI, labelled "unlevered view") =
+return on price over N years* (the original ROI) =
 (appreciation gain + N × cash flow after EMI) ÷ price. *Return on equity over N years* =
-(appreciation gain + N × cash flow after EMI + loan principal repaid by year N) ÷ equity
-invested, where equity = down payment + stamp duty & registration
-(`STAMP_DUTY_REGISTRATION_PCT`, default 6% of price); shown with its compound annual rate.
-Example (Whitefield, 80% LTV, 9%, 20 yrs): equity ₹24.7L, principal repaid over 5 years
-₹8.58L.
+(appreciation gain + N × cash flow after EMI + loan principal repaid by year N − stamp duty
+& registration) ÷ equity invested, where equity = down payment + stamp duty & registration
+(`STAMP_DUTY_REGISTRATION_PCT`, default 6% of price; it is spent, never recovered, so it
+also reduces the gain); shown with its compound annual rate. *IRR on equity* = annualised
+internal rate of return of the buyer's monthly flows: −equity at month 0, cash flow after
+EMI every month, + (sale price − outstanding loan) at month N×12 — lower than annualised
+ROE when there is a monthly shortfall, because that shortfall is extra money put in over
+time. Example (Whitefield, mock 9.2%/yr appreciation, 80% LTV, 9%, 20 yrs): equity ₹24.7L,
+principal repaid over 5 years ₹8.58L, ROE 121.9% (17.3%/yr), IRR 12.97%/yr.
+
+**Confidence cap.** The final confidence never exceeds the metrics' `data_quality_confidence`
+(e.g. 0.85 when appreciation comes from the city-level HPI); a note is added when it is capped.
 
 **Appreciation rate.** Taken from the RBI House Price Index (`data/rbi_hpi.csv`, base
 2022-23 series only): annualised growth over the last `HPI_WINDOW_QUARTERS` (12) quarters
 for the property's city. It is city-level, so data quality confidence is capped at
 `HPI_CITY_LEVEL_CONFIDENCE` (0.85), and windows that include provisional quarters are
-flagged. Cities without an HPI series (Gurgaon, Navi Mumbai, Surat, Indore, Bhubaneswar,
-Goa, Coimbatore, Dehradun; Zirakpur, which is in Mohali district) fall back to the
-synthetic mock rate, labelled as such in the guardrail notes and the report.
+flagged. The rate is cross-checked against the longest available window (Q1 2022-23 to
+the latest quarter); if they differ by more than `HPI_VOLATILITY_THRESHOLD_PTS` (4) points
+it is flagged **volatile** in the guardrail notes and report and never counts as strong
+appreciation evidence (currently Chandigarh, Lucknow, Nagpur). Cities without an HPI series
+(Gurgaon, Navi Mumbai, Surat, Indore, Bhubaneswar, Goa, Coimbatore, Dehradun; Zirakpur,
+which is in Mohali district) fall back to the synthetic mock rate, labelled as such in the
+guardrail notes and the report.
+
+**Missing market data.** If market data is still missing after the data retries, the
+rent- and appreciation-dependent metrics (yield, cash flows, total return, ROE, IRR) are
+marked unavailable (`None`, shown as N/A) instead of being computed from zero rent; the
+cash-flow, leverage and hurdle rules are skipped, and the Recommendation Agent returns
+HOLD with "Insufficient market data" without calling the LLM (confidence 0.3, human review
+still required).
 
 **Outcomes:** refuse (no property data, or no decision/justification) · re-analyse
 (unsupported claims, retries left) · human review (everything else — approval is always
@@ -270,6 +299,32 @@ Structured node and router logs are written to `logs/project.log`.
 
 LangSmith tracing is optional. Set `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY`
 in `.env` to enable it.
+
+## Known limitations
+
+- **Free-text claim check is keyword-based.** `steps/text_claims.py` matches common
+  phrasings of cash-flow sign, risk level and yield level/comparison. It does not
+  understand language: unusual wording slips through, and a sentence that compares yield
+  to the market average can carry an unchecked benchmark claim about something else (e.g.
+  "equity return and yield exceed market averages").
+- **Appreciation is city-level.** The RBI House Price Index is published per city, not per
+  locality, so every property in a city gets the same rate (confidence capped at 0.85).
+  The 2022-23 base series is only 17 quarters long, the latest quarter is provisional, and
+  nine localities fall back to synthetic mock rates.
+- **Fixed 25% operating-expense ratio.** Operating expenses are always 25% of rent, so
+  operating cash flow (before the loan) can never be negative and the "operating loss → no
+  BUY" rule never fires on real data (its eval overrides the metric to test it).
+- **No selling costs or capital gains tax.** Total return, ROE and IRR assume the
+  property is sold at the projected value with no brokerage, transfer costs or tax. Stamp
+  duty & registration on purchase is included (6% default).
+- **Conflicting-evidence check is disabled.** It matched two AI-written analyst notes
+  that are no longer in the corpus; it needs redesigning for real documents (7 of 8 rule
+  checks are active).
+- **Corpus gaps.** No official RERA Act text (only a blog explainer), no current RBI
+  housing-finance rules (the three RBI LTV/housing documents are withdrawn and marked
+  as such), no Karnataka RERA Rules, and the house-property tax pages cite Income-tax Act
+  1961 section numbers. See `rag_corpus/sources.md`.
+- **Synthetic property, rent and risk data.** See the note at the top.
 
 ## Changes from the original group version
 

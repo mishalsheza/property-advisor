@@ -58,16 +58,26 @@ def hpi_city_for(city: str, slug: str | None = None) -> str | None:
     return name if name in _SERIES else None
 
 
-def get_hpi_appreciation(city: str, slug: str | None = None, window_quarters: int = 12) -> dict[str, Any]:
+def _annualised(start: dict, end: dict, quarters: int) -> float:
+    return ((end["index"] / start["index"]) ** (4 / quarters) - 1) * 100
+
+
+def get_hpi_appreciation(
+    city: str, slug: str | None = None, window_quarters: int = 12, volatility_threshold_pts: float = 4.0
+) -> dict[str, Any]:
     """Annualised growth over the last `window_quarters` quarters of the city's
-    base 2022-23 HPI series. Returns {} when there is no series for the city."""
+    base 2022-23 HPI series, cross-checked against the longest available
+    window: if the two rates differ by more than `volatility_threshold_pts`
+    percentage points, the rate is flagged volatile. Returns {} when there is
+    no series for the city."""
     hpi_city = hpi_city_for(city, slug)
     rows = _SERIES.get(hpi_city or "", [])
     if len(rows) <= window_quarters:
         return {}
-    start, end = rows[-1 - window_quarters], rows[-1]
-    years = window_quarters / 4
-    rate = ((end["index"] / start["index"]) ** (1 / years) - 1) * 100
+    start, end, first = rows[-1 - window_quarters], rows[-1], rows[0]
+    rate = _annualised(start, end, window_quarters)
+    longest_quarters = len(rows) - 1
+    longest_rate = _annualised(first, end, longest_quarters)
     return {
         "hpi_city": hpi_city,
         "hpi_base_year": BASE_YEAR,
@@ -75,5 +85,8 @@ def get_hpi_appreciation(city: str, slug: str | None = None, window_quarters: in
         "hpi_start_index": start["index"],
         "hpi_end_index": end["index"],
         "hpi_annualised_growth_pct": round(rate, 2),
+        "hpi_longest_window": f"{first['quarter']} to {end['quarter']}",
+        "hpi_longest_annualised_growth_pct": round(longest_rate, 2),
+        "hpi_volatile": abs(rate - longest_rate) > volatility_threshold_pts,
         "hpi_provisional": start["provisional"] or end["provisional"],
     }

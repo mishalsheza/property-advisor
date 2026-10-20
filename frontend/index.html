@@ -190,6 +190,9 @@
 
   .metric-box .value.negative { color: #f87171; }
   .metric-box .value.positive { color: #4ade80; }
+  .metric-box .hurdle { font-size: 0.78rem; font-weight: 600; margin-top: 4px; }
+  .metric-box .hurdle.below { color: #f87171; }
+  .metric-box .hurdle.above { color: #4ade80; }
 
   ul.evidence-list {
     margin: 0;
@@ -350,11 +353,16 @@
       </div>
       <div class="metric-box">
         <div class="value" id="metricRoi">—</div>
-        <div class="label" id="metricRoiLabel">Total return on price (unlevered view)</div>
+        <div class="label" id="metricRoiLabel">Total return on price</div>
       </div>
       <div class="metric-box">
         <div class="value" id="metricRoe">—</div>
         <div class="label" id="metricRoeLabel">Return on equity</div>
+      </div>
+      <div class="metric-box">
+        <div class="value" id="metricIrr">—</div>
+        <div class="label">IRR on equity (annualised, monthly cash flows)</div>
+        <div class="hurdle" id="metricIrrHurdle"></div>
       </div>
       <div class="metric-box">
         <div class="value" id="metricYield">—</div>
@@ -455,6 +463,16 @@
 
   console.log("FORM FOUND:", form);
 
+  function formatPct(value) {
+    return value === null || value === undefined ? "N/A" : value + "%";
+  }
+
+  // green/red only for real numbers; unavailable metrics (null) stay neutral
+  function signClass(value) {
+    if (value === null || value === undefined) return "value";
+    return "value " + (value < 0 ? "negative" : "positive");
+  }
+
   function formatInr(value) {
     if (value === null || value === undefined || isNaN(value)) return "N/A";
     return "₹" + Number(value).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -500,25 +518,37 @@
     document.getElementById("decisionJustification").textContent = rec.justification || "";
 
     document.getElementById("metricRisk").textContent = risk.risk_score !== undefined ? risk.risk_score : "N/A";
-    document.getElementById("metricRoi").textContent = metrics.roi_pct !== undefined ? metrics.roi_pct + "%" : "N/A";
+    document.getElementById("metricRoi").textContent = formatPct(metrics.roi_pct);
     const years = metrics.horizon_years ? ` over ${metrics.horizon_years} years` : "";
-    document.getElementById("metricRoiLabel").textContent = `Total return on price (unlevered view)${years}`;
-    document.getElementById("metricRoe").textContent = metrics.roe_pct !== undefined ? metrics.roe_pct + "%" : "N/A";
+    document.getElementById("metricRoiLabel").textContent = `Total return on price${years}`;
+    document.getElementById("metricRoe").textContent = formatPct(metrics.roe_pct);
     const perYear =
       metrics.roe_annualised_pct !== undefined && metrics.roe_annualised_pct !== null
         ? ` (${metrics.roe_annualised_pct}%/yr)`
         : "";
     document.getElementById("metricRoeLabel").textContent = `Return on equity${years}${perYear}`;
-    document.getElementById("metricYield").textContent = metrics.rental_yield_pct !== undefined ? metrics.rental_yield_pct + "%" : "N/A";
+    document.getElementById("metricIrr").textContent = formatPct(metrics.irr_annualised_pct);
+    // IRR vs hurdle (by default the loan interest rate = cost of debt)
+    const hurdleEl = document.getElementById("metricIrrHurdle");
+    if (metrics.irr_annualised_pct !== undefined && metrics.irr_annualised_pct !== null && metrics.hurdle_rate_pct !== undefined) {
+      const hurdleName = metrics.hurdle_is_cost_of_debt === false ? "hurdle rate" : "cost of debt";
+      const below = metrics.irr_below_hurdle;
+      hurdleEl.textContent = `${below ? "below" : "above"} ${metrics.hurdle_rate_pct}% ${hurdleName}`;
+      hurdleEl.className = "hurdle " + (below ? "below" : "above");
+    } else {
+      hurdleEl.textContent = "";
+      hurdleEl.className = "hurdle";
+    }
+    document.getElementById("metricYield").textContent = formatPct(metrics.rental_yield_pct);
 
     // annual_cash_flow_inr is AFTER the EMI; operating_cash_flow_inr is before the loan
     const operatingEl = document.getElementById("metricOperatingCashFlow");
     operatingEl.textContent = formatInr(metrics.operating_cash_flow_inr);
-    operatingEl.className = "value " + (metrics.operating_cash_flow_inr < 0 ? "negative" : "positive");
+    operatingEl.className = signClass(metrics.operating_cash_flow_inr);
 
     const cashFlowEl = document.getElementById("metricCashFlow");
     cashFlowEl.textContent = formatInr(metrics.annual_cash_flow_inr);
-    cashFlowEl.className = "value " + (metrics.annual_cash_flow_inr < 0 ? "negative" : "positive");
+    cashFlowEl.className = signClass(metrics.annual_cash_flow_inr);
 
     const evidenceList = document.getElementById("evidenceList");
     evidenceList.innerHTML = "";
@@ -580,8 +610,10 @@
     document.getElementById("metricYield").textContent = "—";
     document.getElementById("metricOperatingCashFlow").textContent = "—";
     document.getElementById("metricCashFlow").textContent = "—";
-    document.getElementById("metricRoiLabel").textContent = "Total return on price (unlevered view)";
+    document.getElementById("metricRoiLabel").textContent = "Total return on price";
     document.getElementById("metricRoe").textContent = "—";
+    document.getElementById("metricIrr").textContent = "—";
+    document.getElementById("metricIrrHurdle").textContent = "";
     document.getElementById("metricRoeLabel").textContent = "Return on equity";
     document.getElementById("evidenceList").innerHTML = "";
     document.getElementById("guardrailSection").style.display = "none";

@@ -49,13 +49,15 @@ given below; never invent figures. Weigh together:
 - Total return: roi_pct is the total return ON PRICE over roi_horizon_years \
 (appreciation plus cash flow after EMI, divided by price). roe_pct is the return \
 ON THE BUYER'S EQUITY over the same years (equity_invested_inr = down payment + \
-stamp duty & registration; gain also counts loan principal repaid), and \
-roe_annualised_pct its compound yearly rate. Weigh both with the market \
-appreciation rate.
+stamp duty & registration; gain counts loan principal repaid, minus stamp \
+duty), roe_annualised_pct its compound yearly rate, and irr_annualised_pct the \
+IRR on the buyer's monthly cash flows (the most realistic yearly return). \
+Weigh these with the market appreciation rate.
 - Appreciation: Market.appreciation_rate_5yr_pct is an annual rate. \
 appreciation_source "rbi_hpi" means city-level RBI House Price Index growth \
-(hpi_provisional=true: latest quarter provisional); otherwise it is a synthetic \
-fallback. Say which when you rely on it.
+(hpi_provisional=true: latest quarter provisional; hpi_volatile=true: the \
+longest-window rate differs a lot, treat the rate as unreliable); otherwise it \
+is a synthetic fallback. Say which when you rely on it.
 - Income: rental_yield_pct; operating_cash_flow_inr (rent minus expenses, BEFORE \
 the loan; cash_flow_severity describes this figure); cash_flow_after_emi_inr \
 (what the buyer actually nets AFTER paying the EMI).
@@ -92,6 +94,11 @@ Operating cash-flow rule (mandatory): cash_flow_severity="significantly_negative
 (the asset loses money even before financing) -> decision must be HOLD or AVOID \
 UNLESS strong_appreciation_evidence=true.
 
+Hurdle-rate rule (mandatory): irr_below_hurdle=true (irr_annualised_pct < \
+hurdle_rate_pct, by default the loan's interest rate) means the leverage destroys \
+value -> decision must NOT be BUY: HOLD, or AVOID if irr_annualised_pct < 0. Say \
+so in the justification.
+
 Evidence: up to 3 supporting_evidence items, each {metric, cited_value, statement}. \
 metric must be one of: """ + ", ".join(PROMPT_EVIDENCE_METRICS) + """. cited_value must be \
 copied exactly from the Metrics/Risk/Market/Property data below (for rag_source: \
@@ -121,6 +128,10 @@ def _compact_metrics(metrics: dict) -> dict:
         "roi_pct",
         "roe_pct",
         "roe_annualised_pct",
+        "irr_annualised_pct",
+        "hurdle_rate_pct",
+        "irr_minus_hurdle_pct",
+        "irr_below_hurdle",
         "equity_invested_inr",
         "rental_yield_pct",
         "cap_rate_pct",
@@ -146,6 +157,33 @@ def _compact_risk(risk: dict) -> dict:
     if risk.get("raw_indicators"):
         compact["indicators"] = risk["raw_indicators"]
     return compact
+
+
+INSUFFICIENT_MARKET_DATA = "Insufficient market data"
+
+
+def insufficient_market_data_recommendation(state: PropertyState) -> dict:
+    """HOLD without an LLM call when market data is still missing after retries."""
+    locality = ", ".join(v for v in (state.property_data.get("locality"), state.property_data.get("city")) if v)
+    return RecommendationOutput(
+        decision="HOLD",
+        justification=(
+            f"{INSUFFICIENT_MARKET_DATA}: no rent or appreciation data for {locality} after "
+            f"{state.data_retry_count} retries, so rental yield, cash flow after EMI, return on equity "
+            f"and IRR can't be computed and no BUY or AVOID call is possible."
+        ),
+        supporting_evidence=[],
+        confidence_score=float(state.investment_metrics.get("data_quality_confidence", 0.3)),
+    ).model_dump()
+
+
+def hurdle_note(metrics: dict) -> str:
+    """The mandatory note when IRR on equity is below the hurdle (also used by the guardrail)."""
+    hurdle_name = "cost of debt" if metrics.get("hurdle_is_cost_of_debt", True) else "hurdle rate"
+    return (
+        f"Leverage destroys value: IRR {metrics.get('irr_annualised_pct'):g}% < "
+        f"{hurdle_name} {metrics.get('hurdle_rate_pct'):g}%"
+    )
 
 
 def cash_flow_warning(state: PropertyState) -> str:
@@ -197,6 +235,16 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
             f"significantly negative and strong_appreciation_evidence was not met.]"
         )
 
+    if metrics.get("irr_below_hurdle"):
+        # Hurdle rule: if the equity earns less than the hurdle (by default the
+        # cost of debt), the leverage destroys value and BUY is not allowed.
+        # Runs before the leverage cap so a negative IRR gives AVOID, not HOLD.
+        irr = metrics["irr_annualised_pct"]
+        if decision == "BUY":
+            decision = "AVOID" if irr < 0 else "HOLD"
+            justification = f"{justification} [Guardrail override: BUY was downgraded to {decision} by the hurdle-rate rule.]"
+        justification = f"{justification} [{hurdle_note(metrics)}]"
+
     if heavy_shortfall:
         # Leverage rule, upper tier: a very large monthly shortfall after EMI
         # caps confidence and BUY must rest on strong appreciation.
@@ -215,6 +263,12 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
         # whenever the text merely said "cash flow").
         justification = f"{justification} {cash_flow_warning(state)}"
 
+    # The recommendation can't be more certain than the data it rests on.
+    data_quality = metrics.get("data_quality_confidence")
+    if data_quality is not None and confidence > data_quality:
+        confidence = round(float(data_quality), 2)
+        justification = f"{justification} [Note: confidence capped at the data quality confidence of {data_quality:g}.]"
+
     return RecommendationOutput(
         decision=decision,
         justification=justification,
@@ -229,6 +283,12 @@ def recommendation_agent(state: PropertyState) -> dict:
         # Nothing to judge (address not found after data retries): skip the
         # LLM call; the guardrail refuses an empty recommendation.
         return {"recommendation": {}}
+
+    if not state.market_data:
+        # No rent or appreciation data even after the retries: the return
+        # metrics are unavailable, so there is nothing for the LLM to weigh and
+        # the leverage/hurdle rules can't apply. Deterministic HOLD.
+        return {"recommendation": insufficient_market_data_recommendation(state)}
 
     llm = get_llm(max_tokens=RECOMMENDATION_MAX_TOKENS)
     structured_llm = llm.with_structured_output(RecommendationOutput)

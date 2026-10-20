@@ -44,9 +44,17 @@ RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
 # last N quarters; HPI is city-level, so data quality confidence is capped.
 HPI_WINDOW_QUARTERS = int(os.getenv("HPI_WINDOW_QUARTERS", "12"))
 HPI_CITY_LEVEL_CONFIDENCE = float(os.getenv("HPI_CITY_LEVEL_CONFIDENCE", "0.85"))
+# If the windowed and longest-available HPI rates differ by more than this many
+# percentage points, the rate is flagged volatile and can't be strong appreciation evidence.
+HPI_VOLATILITY_THRESHOLD_PTS = float(os.getenv("HPI_VOLATILITY_THRESHOLD_PTS", "4"))
 
 # Stamp duty + registration as % of price, paid from the buyer's equity (return on equity).
 STAMP_DUTY_REGISTRATION_PCT = float(os.getenv("STAMP_DUTY_REGISTRATION_PCT", "6"))
+
+# Hurdle rate for IRR on equity: below it, BUY is not allowed. Unset = the
+# loan's interest rate (cost of debt), so it follows --interest-rate.
+_hurdle = os.getenv("HURDLE_RATE_PCT", "").strip()
+HURDLE_RATE_PCT: float | None = float(_hurdle) if _hurdle else None
 
 # Leverage rule, by monthly shortfall after EMI as a % of the EMI:
 # above WARN -> the after-EMI warning is mandatory;

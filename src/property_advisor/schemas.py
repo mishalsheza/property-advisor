@@ -18,6 +18,7 @@ EVIDENCE_METRIC_FIELDS: dict[str, tuple[str, str]] = {
     "roi_pct": ("investment_metrics", "roi_pct"),
     "roe_pct": ("investment_metrics", "roe_pct"),
     "roe_annualised_pct": ("investment_metrics", "roe_annualised_pct"),
+    "irr_annualised_pct": ("investment_metrics", "irr_annualised_pct"),
     "equity_invested_inr": ("investment_metrics", "equity_invested_inr"),
     "principal_repaid_inr": ("investment_metrics", "principal_repaid_inr"),
     "rental_yield_pct": ("investment_metrics", "rental_yield_pct"),

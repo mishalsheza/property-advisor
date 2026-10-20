@@ -122,10 +122,45 @@ def test_no_warning_below_warning_tier(whitefield):
     assert "[Warning" not in result.justification
 
 
-def test_leverage_cap_tier_downgrades_buy_without_strong_appreciation():
+def test_negative_irr_turns_buy_into_avoid_with_hurdle_note():
     worli = _state("Worli, Mumbai", "Mumbai", "Worli", "worli_mumbai")
     result = _enforce_cashflow_safety_net(
         RecommendationOutput(decision="BUY", justification="Prime location.", confidence_score=0.92), worli
     )
+    irr = worli.investment_metrics["irr_annualised_pct"]
+    assert irr < 0
+    assert result.decision == "AVOID"
+    assert f"[Leverage destroys value: IRR {irr:g}% < cost of debt 9%]" in result.justification
+    assert result.confidence_score <= 0.75  # 86.5% shortfall: cap tier
+
+
+def test_leverage_cap_tier_downgrades_buy_without_strong_appreciation():
+    worli = _state("Worli, Mumbai", "Mumbai", "Worli", "worli_mumbai")
+    # isolate the leverage rule: pretend the IRR clears the hurdle
+    metrics = {**worli.investment_metrics, "irr_below_hurdle": False}
+    result = _enforce_cashflow_safety_net(
+        RecommendationOutput(decision="BUY", justification="Prime location.", confidence_score=0.92),
+        worli.model_copy(update={"investment_metrics": metrics}),
+    )
     assert result.decision == "HOLD"
     assert result.confidence_score <= 0.75
+
+
+def test_irr_below_hurdle_but_positive_gives_hold(whitefield):
+    metrics = {**whitefield.investment_metrics, "irr_annualised_pct": 8.84, "hurdle_rate_pct": 9.0, "irr_below_hurdle": True}
+    result = _enforce_cashflow_safety_net(
+        RecommendationOutput(decision="BUY", justification="Strong appreciation.", confidence_score=0.8),
+        whitefield.model_copy(update={"investment_metrics": metrics}),
+    )
+    assert result.decision == "HOLD"
+    assert "[Leverage destroys value: IRR 8.84% < cost of debt 9%]" in result.justification
+
+
+def test_confidence_capped_at_data_quality(whitefield):
+    metrics = {**whitefield.investment_metrics, "data_quality_confidence": 0.3}
+    result = _enforce_cashflow_safety_net(
+        RecommendationOutput(decision="HOLD", justification="Limited data.", confidence_score=0.9),
+        whitefield.model_copy(update={"investment_metrics": metrics}),
+    )
+    assert result.confidence_score == 0.3
+    assert "[Note: confidence capped at the data quality confidence of 0.3.]" in result.justification

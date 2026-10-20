@@ -33,6 +33,7 @@ from property_advisor.config import (
     MAX_REANALYSIS_RETRIES,
     RISK_HUMAN_REVIEW_THRESHOLD,
 )
+from property_advisor.agents.recommendation_agent import hurdle_note
 from property_advisor.logging_utils import logger, timed_node
 from property_advisor.schemas import EVIDENCE_METRIC_FIELDS, RAG_SOURCE_METRIC
 from property_advisor.state import PropertyState
@@ -140,10 +141,16 @@ def check_claims(state: PropertyState) -> list[dict[str, Any]]:
 def _appreciation_source_note(market: dict) -> str:
     rate = market.get("appreciation_rate_5yr_pct")
     if market.get("appreciation_source") == "rbi_hpi":
-        provisional = " — includes PROVISIONAL quarters, may be revised" if market.get("hpi_provisional") else ""
+        provisional = " Includes PROVISIONAL quarters, may be revised." if market.get("hpi_provisional") else ""
+        volatile = (
+            f" VOLATILE: the longest available window ({market.get('hpi_longest_window')}) gives "
+            f"{market.get('hpi_longest_annualised_growth_pct')}%/yr, so it does not count as strong appreciation evidence."
+            if market.get("hpi_volatile")
+            else ""
+        )
         return (
             f"Appreciation rate {rate}%/yr is from the RBI House Price Index for {market.get('hpi_city')} "
-            f"({market.get('hpi_window')}): city-level, not locality-specific{provisional}."
+            f"({market.get('hpi_window')}): city-level, not locality-specific.{provisional}{volatile}"
         )
     return f"Appreciation rate {rate}%/yr is SYNTHETIC mock data ({market.get('appreciation_source', 'mock')})."
 
@@ -190,6 +197,10 @@ def guardrail_step(state: PropertyState) -> dict:
             f"{consequence})."
         )
 
+    irr_below_hurdle = bool(metrics.get("irr_below_hurdle"))
+    if irr_below_hurdle:
+        reasons.append(f"{hurdle_note(metrics)}: BUY is not allowed (HOLD, or AVOID if IRR < 0).")
+
     confidence = state.recommendation.get("confidence_score", 0.0)
     confidence_below_threshold = confidence < GUARDRAIL_CONFIDENCE_THRESHOLD
     if confidence_below_threshold:
@@ -229,6 +240,7 @@ def guardrail_step(state: PropertyState) -> dict:
         or high_risk
         or negative_cash_flow
         or levered_shortfall
+        or irr_below_hurdle
         or confidence_below_threshold
         or missing_market_data
         or conflicting_evidence
@@ -244,6 +256,7 @@ def guardrail_step(state: PropertyState) -> dict:
         "negative_cash_flow": negative_cash_flow,
         "levered_shortfall": levered_shortfall,
         "levered_shortfall_capped": levered_shortfall_capped,
+        "irr_below_hurdle": irr_below_hurdle,
         "confidence_below_threshold": confidence_below_threshold,
         "conflicting_evidence": conflicting_evidence,
         "conflict_check": "enabled" if CONFLICT_CHECK_ENABLED else "disabled",

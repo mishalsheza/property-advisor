@@ -87,6 +87,31 @@ def calculate_annualised_return(total_return_pct: float, years: int) -> float | 
     return round(((1 + total_return_pct / 100) ** (1 / years) - 1) * 100, 2)
 
 
+def calculate_irr_annualised(monthly_cash_flows: list[float]) -> float | None:
+    """Annualised IRR (%) of monthly cash flows, flow 0 at month 0.
+
+    Solved by bisection on the monthly rate; None when the flows don't change
+    sign (no IRR exists) or no root lies in (-99%, +100%) per month.
+    """
+    if not any(cf < 0 for cf in monthly_cash_flows) or not any(cf > 0 for cf in monthly_cash_flows):
+        return None
+
+    def npv(rate: float) -> float:
+        return sum(cf / (1 + rate) ** t for t, cf in enumerate(monthly_cash_flows))
+
+    lo, hi = -0.99, 1.0
+    if npv(lo) * npv(hi) > 0:
+        return None
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if npv(lo) * npv(mid) <= 0:
+            hi = mid
+        else:
+            lo = mid
+    monthly = (lo + hi) / 2
+    return round(((1 + monthly) ** MONTHS_PER_YEAR - 1) * 100, 2)
+
+
 def calculate_break_even_years(total_investment_inr: float, annual_cash_flow_inr: float) -> float | None:
     """Years to recover the initial investment from cash flow alone.
 
@@ -135,6 +160,48 @@ def _is_strong_appreciation_evidence(appreciation_pct: float, roi_pct: float) ->
     )
 
 
+# Metrics that depend on rent or appreciation, i.e. on market data. Without it
+# they would be computed from zero rent and zero growth, which is meaningless.
+MARKET_DEPENDENT_METRICS = (
+    "monthly_rent_inr",
+    "annual_rent_inr",
+    "annual_operating_expenses_inr",
+    "unlevered_annual_cash_flow_inr",
+    "annual_cash_flow_inr",
+    "operating_cash_flow_inr",
+    "cash_flow_after_emi_inr",
+    "monthly_shortfall_after_emi_inr",
+    "shortfall_pct_of_emi",
+    "rental_yield_pct",
+    "cap_rate_pct",
+    "projected_value_inr",
+    "cumulative_cash_flow_inr",
+    "roi_pct",
+    "equity_gain_inr",
+    "roe_pct",
+    "roe_annualised_pct",
+    "irr_annualised_pct",
+    "irr_minus_hurdle_pct",
+    "break_even_years",
+)
+
+
+def _without_market_data(metrics: dict[str, Any]) -> dict[str, Any]:
+    """Mark market-dependent metrics unavailable and clear the flags that drive
+    the cash-flow, leverage and hurdle rules. Price- and loan-only figures
+    (EMI, equity invested, principal repaid) stay."""
+    return {
+        **metrics,
+        **{key: None for key in MARKET_DEPENDENT_METRICS},
+        "unavailable_metrics": list(MARKET_DEPENDENT_METRICS),
+        "cash_flow_severity": "unknown",
+        "negative_cash_flow": False,
+        "levered_cash_flow_negative": False,
+        "irr_below_hurdle": False,
+        "strong_appreciation_evidence": False,
+    }
+
+
 def compute_investment_metrics(
     property_data: dict[str, Any],
     market_data: dict[str, Any],
@@ -145,6 +212,7 @@ def compute_investment_metrics(
     interest_rate_pct: float = DEFAULT_INTEREST_RATE_PCT,
     loan_tenure_years: int = DEFAULT_LOAN_TENURE_YEARS,
     stamp_duty_registration_pct: float = DEFAULT_STAMP_DUTY_REGISTRATION_PCT,
+    hurdle_rate_pct: float | None = None,
 ) -> dict[str, Any]:
     """Aggregate all deterministic investment metrics for the financial calculation step."""
     price_inr = float(property_data.get("price_inr", budget) or budget)
@@ -174,25 +242,46 @@ def compute_investment_metrics(
     total_gain_inr = (projected_value_inr - price_inr) + cumulative_cash_flow_inr
     roi_pct = calculate_roi(total_gain_inr, price_inr)
     break_even_years = calculate_break_even_years(price_inr, unlevered_cash_flow_inr)
-    strong_appreciation_evidence = _is_strong_appreciation_evidence(appreciation_pct, roi_pct)
+    # a volatile HPI rate (windowed vs longest-available differ a lot) can't count as strong evidence
+    strong_appreciation_evidence = _is_strong_appreciation_evidence(appreciation_pct, roi_pct) and not market_data.get(
+        "hpi_volatile", False
+    )
     monthly_shortfall_inr = round(max(0.0, -annual_cash_flow_inr) / MONTHS_PER_YEAR, 2)
     shortfall_pct_of_emi = round(monthly_shortfall_inr / monthly_emi_inr * 100, 1) if monthly_emi_inr else 0.0
 
     # Return on equity: what the buyer actually puts in (down payment + stamp
     # duty & registration) versus appreciation, cash flow after EMI, and the
-    # loan principal repaid by the end of the horizon (equity built up).
+    # loan principal repaid by the end of the horizon (equity built up), minus
+    # stamp duty & registration, which is spent and never recovered.
     down_payment_inr = price_inr - loan_principal_inr
     stamp_duty_registration_inr = price_inr * stamp_duty_registration_pct / 100
     equity_invested_inr = down_payment_inr + stamp_duty_registration_inr
     months_paid = min(horizon_years, loan_tenure_years) * MONTHS_PER_YEAR
     outstanding_loan_inr = calculate_outstanding_balance(loan_principal_inr, interest_rate_pct, monthly_emi_inr, months_paid)
     principal_repaid_inr = round(loan_principal_inr - outstanding_loan_inr, 2)
-    equity_gain_inr = (projected_value_inr - price_inr) + cumulative_cash_flow_inr + principal_repaid_inr
+    equity_gain_inr = (
+        (projected_value_inr - price_inr) + cumulative_cash_flow_inr + principal_repaid_inr - stamp_duty_registration_inr
+    )
     roe_pct = calculate_roi(equity_gain_inr, equity_invested_inr)
     roe_annualised_pct = calculate_annualised_return(roe_pct, horizon_years)
 
-    return {
+    # IRR on the buyer's actual monthly flows: equity in at month 0, cash flow
+    # after EMI every month, and sale price minus outstanding loan at the end
+    # (no selling costs or capital gains tax).
+    monthly_cash_flow_after_emi_inr = annual_cash_flow_inr / MONTHS_PER_YEAR
+    horizon_months = horizon_years * MONTHS_PER_YEAR
+    irr_flows = [-equity_invested_inr] + [monthly_cash_flow_after_emi_inr] * horizon_months
+    irr_flows[-1] += projected_value_inr - outstanding_loan_inr
+    irr_annualised_pct = calculate_irr_annualised(irr_flows) if horizon_months else None
+
+    # Hurdle: the return the equity must beat; by default the cost of debt.
+    hurdle_is_cost_of_debt = hurdle_rate_pct is None
+    hurdle_rate_pct = interest_rate_pct if hurdle_is_cost_of_debt else hurdle_rate_pct
+    irr_below_hurdle = irr_annualised_pct is not None and irr_annualised_pct < hurdle_rate_pct
+
+    metrics = {
         "price_inr": price_inr,
+        "market_data_available": bool(market_data),
         "monthly_rent_inr": round(monthly_rent_inr, 2),
         "annual_rent_inr": round(annual_rent_inr, 2),
         "annual_operating_expenses_inr": round(annual_operating_expenses_inr, 2),
@@ -232,6 +321,11 @@ def compute_investment_metrics(
         # "Return on equity": equity_gain / equity_invested, total and compound-annualised
         "roe_pct": roe_pct,
         "roe_annualised_pct": roe_annualised_pct,
+        "irr_annualised_pct": irr_annualised_pct,
+        "hurdle_rate_pct": hurdle_rate_pct,
+        "hurdle_is_cost_of_debt": hurdle_is_cost_of_debt,
+        "irr_minus_hurdle_pct": round(irr_annualised_pct - hurdle_rate_pct, 2) if irr_annualised_pct is not None else None,
+        "irr_below_hurdle": irr_below_hurdle,
         "break_even_years": break_even_years,
         "horizon_years": horizon_years,
         "negative_cash_flow": unlevered_cash_flow_inr < 0,
@@ -243,3 +337,4 @@ def compute_investment_metrics(
             float(market_data.get("data_quality_confidence", 1.0)),
         ),
     }
+    return metrics if market_data else _without_market_data(metrics)

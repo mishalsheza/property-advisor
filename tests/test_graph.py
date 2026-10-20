@@ -127,3 +127,18 @@ def test_api_rejects_invalid_loan_inputs():
     client = TestClient(app_module.app)
     response = client.post("/analyze", json={"address": "Whitefield, Bangalore", "budget": 9_500_000, "ltv": 95})
     assert response.status_code == 422
+
+
+def test_missing_market_data_returns_hold_without_llm(stub_rag):
+    # the autouse fixture makes any real LLM call raise
+    result, _ = _run(
+        build_graph(),
+        {**WHITEFIELD, "property_address": "Plot near Saraiyaganj, Muzaffarpur, Bihar"},
+        "t-no-market",
+    )
+    rec = result["recommendation"]
+    assert result["data_retry_count"] == 2
+    assert rec["decision"] == "HOLD"
+    assert rec["justification"].startswith("Insufficient market data")
+    assert rec["confidence_score"] == 0.3
+    assert "__interrupt__" in result  # still goes to human review

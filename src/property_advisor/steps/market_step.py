@@ -8,7 +8,7 @@ synthetic mock rate is used only as a labelled fallback.
 
 from __future__ import annotations
 
-from property_advisor.config import HPI_CITY_LEVEL_CONFIDENCE, HPI_WINDOW_QUARTERS
+from property_advisor.config import HPI_CITY_LEVEL_CONFIDENCE, HPI_VOLATILITY_THRESHOLD_PTS, HPI_WINDOW_QUARTERS
 from property_advisor.logging_utils import timed_node
 from property_advisor.state import PropertyState
 from property_advisor.tools.hpi_tool import get_hpi_appreciation
@@ -16,7 +16,9 @@ from property_advisor.tools.market_data_tool import get_market_data
 
 
 def _with_appreciation_source(market_data: dict, city: str, slug: str | None) -> dict:
-    hpi = get_hpi_appreciation(city, slug, window_quarters=HPI_WINDOW_QUARTERS)
+    hpi = get_hpi_appreciation(
+        city, slug, window_quarters=HPI_WINDOW_QUARTERS, volatility_threshold_pts=HPI_VOLATILITY_THRESHOLD_PTS
+    )
     market_data = {**market_data, "mock_appreciation_rate_5yr_pct": market_data.get("appreciation_rate_5yr_pct")}
     if hpi:
         return {

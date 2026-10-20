@@ -99,6 +99,7 @@ class SafetyNetCase:
     forced: dict
     rules: list[Rule]
     metric_overrides: dict = field(default_factory=dict)
+    interest_rate_pct: float = 9.0
 
 
 def _confidence(result: dict) -> float:
@@ -113,18 +114,33 @@ def _forced_buy(justification: str = "Strong appreciation supports a BUY.") -> d
     return {"decision": "BUY", "justification": justification, "confidence_score": 0.92, "supporting_evidence": []}
 
 
+def _has_hurdle_note(result: dict, irr: str, debt: str) -> bool:
+    note = f"Leverage destroys value: IRR {irr}% < cost of debt {debt}%"
+    return note in result.get("recommendation", {}).get("justification", "")
+
+
 SAFETY_NET_CASES = [
     SafetyNetCase(
-        "shortfall_warning_tier",
+        "hurdle_rate_blocks_buy_whitefield",
         "whitefield_bangalore",
         # the reported case: BUY at 92% claiming positive cash flow while cash flow after EMI is -5.06 lakh/yr
         _forced_buy("Positive cash flow and strong appreciation support a BUY."),
         [
             Rule(
-                "warning added, decision and confidence untouched",
-                "Whitefield's shortfall after EMI is 61.6% of the EMI: above the 25% warning level, below the "
-                "70% cap level, so only the mandatory warning applies.",
-                lambda r: _decision(r) == "BUY" and _confidence(r) == 0.92 and _has_warning(r),
+                "BUY -> HOLD with the hurdle note",
+                "At 9% interest Whitefield's IRR on equity is 8.84%/yr: -24.7L at month 0, -42,129 a month, "
+                "+ (sale at 7.52%/yr HPI growth - outstanding loan) at month 60. 8.84% < 9% cost of debt, "
+                "so the leverage destroys value and BUY is not allowed (IRR >= 0, so HOLD, not AVOID).",
+                lambda r: _decision(r) == "HOLD" and _has_hurdle_note(r, "8.84", "9")
+                and r["guardrail_result"]["irr_below_hurdle"] is True,
+            ),
+            Rule(
+                "after-EMI warning added; confidence capped by data quality (0.85)",
+                "Shortfall after EMI is 61.6% of the EMI: above the 25% warning level, below the 70% cap "
+                "level. Confidence 0.92 is capped at the 0.85 data quality of city-level HPI appreciation.",
+                lambda r: _has_warning(r) and _confidence(r) == 0.85
+                and r["guardrail_result"]["levered_shortfall"] is True
+                and r["guardrail_result"]["levered_shortfall_capped"] is False,
             ),
             Rule(
                 "'Positive cash flow' is an unsupported claim -> re-analysis",
@@ -132,12 +148,35 @@ SAFETY_NET_CASES = [
                 lambda r: any(c["metric"] == "text:cash_flow_after_emi" for c in r["guardrail_result"]["unsupported_claims"])
                 and r["guardrail_result"]["status"] == "request_reanalysis",
             ),
+        ],
+    ),
+    SafetyNetCase(
+        "hurdle_rate_passes_whitefield_at_8pct",
+        "whitefield_bangalore",
+        _forced_buy(),
+        [
             Rule(
-                "guardrail reports the shortfall (warning tier, not capped)",
-                "The shortfall warning must reach the human reviewer, not only the justification.",
-                lambda r: r["guardrail_result"]["levered_shortfall"] is True
-                and r["guardrail_result"]["levered_shortfall_capped"] is False,
-            ),
+                "BUY kept, no hurdle note, warning added",
+                "At 8% interest the EMI falls to 63,569 and IRR on equity rises to 10.65%/yr > 8% cost of "
+                "debt, so the hurdle rule does not apply; the 58.7% shortfall still needs the warning.",
+                lambda r: _decision(r) == "BUY" and "Leverage destroys value" not in r["recommendation"]["justification"]
+                and _has_warning(r) and r["guardrail_result"]["irr_below_hurdle"] is False,
+            )
+        ],
+        interest_rate_pct=8.0,
+    ),
+    SafetyNetCase(
+        "negative_irr_buy_becomes_avoid",
+        "worli_mumbai",
+        _forced_buy(),
+        [
+            Rule(
+                "BUY -> AVOID with the hurdle note; confidence <= 0.75",
+                "Worli's IRR on equity is -7.21%/yr: below the 9% cost of debt and below zero, so AVOID. Its "
+                "86.5% shortfall is above the 70% cap level, so confidence is also capped at 0.75.",
+                lambda r: _decision(r) == "AVOID" and _has_hurdle_note(r, "-7.21", "9")
+                and _confidence(r) <= 0.75 and _has_warning(r),
+            )
         ],
     ),
     SafetyNetCase(
@@ -146,13 +185,15 @@ SAFETY_NET_CASES = [
         _forced_buy(),
         [
             Rule(
-                "forced BUY downgraded to HOLD, confidence <= 0.75, warning added",
-                "Worli's shortfall after EMI is 86.5% of the EMI (> 70%) and strong_appreciation_evidence is "
-                "false, so BUY is not justified.",
+                "forced BUY downgraded to HOLD by the leverage rule, confidence <= 0.75",
+                "Above 70% shortfall, BUY needs strong appreciation evidence; Worli has none. (Overridden "
+                "metric: irr_below_hurdle=False, to test the leverage rule on its own — every mock property "
+                "above 70% is also below the hurdle.)",
                 lambda r: _decision(r) == "HOLD" and _confidence(r) <= 0.75 and _has_warning(r)
                 and r["guardrail_result"]["levered_shortfall_capped"] is True,
             )
         ],
+        metric_overrides={"irr_below_hurdle": False},
     ),
     SafetyNetCase(
         "shortfall_cap_tier_with_strong_appreciation",
@@ -162,11 +203,12 @@ SAFETY_NET_CASES = [
             Rule(
                 "BUY kept, confidence <= 0.75, warning added",
                 "Above 70% BUY needs strong appreciation evidence; with it, BUY stands but confidence is "
-                "capped. (Overridden metric: no mock property above 70% has strong appreciation evidence.)",
+                "capped. (Overridden metrics: strong_appreciation_evidence=True and irr_below_hurdle=False — "
+                "no mock property above 70% has either.)",
                 lambda r: _decision(r) == "BUY" and _confidence(r) <= 0.75 and _has_warning(r),
             )
         ],
-        metric_overrides={"strong_appreciation_evidence": True},
+        metric_overrides={"strong_appreciation_evidence": True, "irr_below_hurdle": False},
     ),
     SafetyNetCase(
         "operating_loss_forced_buy",
@@ -216,6 +258,19 @@ DETERMINISTIC_SCENARIOS = [
         ],
     ),
     Scenario(
+        "volatile_hpi_not_strong_evidence",
+        _inp("Gomti Nagar, Lucknow", 8_000_000.0),
+        [
+            Rule(
+                "Lucknow HPI flagged volatile; not strong appreciation evidence",
+                "Lucknow's 12-quarter rate is 11.99%/yr but the longest window (Q1 2022-23 to Q1 2026-27) "
+                "gives 5.23%/yr: a 6.8-point gap (> 4), so the high recent rate can't justify BUY on its own.",
+                lambda r: r["market_data"]["hpi_volatile"] is True
+                and r["investment_metrics"]["strong_appreciation_evidence"] is False,
+            )
+        ],
+    ),
+    Scenario(
         "no_hpi_series_uses_labelled_mock_fallback",
         _inp("Cyber City, Gurgaon", 12_000_000.0),
         [
@@ -243,7 +298,7 @@ DETERMINISTIC_SCENARIOS = [
     ),
     Scenario("high_flood_risk", DADAR, [HIGH_FLOOD_RISK]),
     Scenario(
-        "missing_market_data_retry",
+        "missing_market_data_hold",
         MUZAFFARPUR,
         [
             Rule(
@@ -251,8 +306,31 @@ DETERMINISTIC_SCENARIOS = [
                 "Muzaffarpur has property data but no market-trend entry, so the retry gate "
                 "must exhaust its retries before continuing.",
                 lambda r: r.get("data_retry_count") == MAX_DATA_RETRIES and not r.get("market_data"),
-            )
+            ),
+            Rule(
+                "yield, cash flow, ROE and IRR unavailable (None), not computed from zero rent",
+                "Without market data there is no rent or appreciation; computing returns from zero would "
+                "show a meaningless -43% return instead of 'unknown'.",
+                lambda r: all(
+                    r["investment_metrics"][k] is None
+                    for k in ("rental_yield_pct", "cash_flow_after_emi_inr", "roi_pct", "roe_pct", "irr_annualised_pct")
+                )
+                and r["investment_metrics"]["market_data_available"] is False,
+            ),
+            Rule(
+                "HOLD with 'Insufficient market data' reason; no hurdle or leverage rule fired",
+                "With return metrics unavailable no BUY/AVOID call is possible, and the hurdle and "
+                "leverage rules have no IRR or cash flow to act on. Decided without an LLM call.",
+                lambda r: _decision(r) == "HOLD"
+                and r["recommendation"]["justification"].startswith("Insufficient market data")
+                and "Leverage destroys value" not in r["recommendation"]["justification"]
+                and not _has_warning(r)
+                and r["guardrail_result"]["irr_below_hurdle"] is False
+                and r["guardrail_result"]["levered_shortfall"] is False,
+            ),
         ],
+        # the Recommendation Agent makes no LLM call without market data
+        run_to_end=True,
     ),
     Scenario(
         "invalid_address_refused",
@@ -271,14 +349,14 @@ DETERMINISTIC_SCENARIOS = [
 
 LLM_SCENARIOS = [
     Scenario(
-        "high_growth_not_avoid",
+        "high_growth_hold_by_hurdle",
         WHITEFIELD,
         [
             Rule(
-                "decision != 'AVOID'",
-                "ROI > 15%, strong appreciation evidence and low risk: the prompt reserves AVOID "
-                "for poor deals, so AVOID here would contradict the data.",
-                lambda r: _decision(r) in ("BUY", "HOLD"),
+                "decision == 'HOLD' with the hurdle note",
+                "IRR on equity 8.84%/yr < 9% cost of debt rules out BUY; IRR is positive, total return on "
+                "price is 17.1% and risk is low (13.2), so AVOID would also contradict the data.",
+                lambda r: _decision(r) == "HOLD" and _has_hurdle_note(r, "8.84", "9"),
             ),
             Rule(
                 "after-EMI warning present",
@@ -322,9 +400,11 @@ LLM_SCENARIOS = [
                 lambda r: r.get("guardrail_result", {}).get("missing_market_data") is True,
             ),
             Rule(
-                "decision != 'BUY'",
-                "ROI is strongly negative (no rent/appreciation data), so BUY is unsupported.",
-                lambda r: _decision(r) in ("HOLD", "AVOID"),
+                "HOLD with 'Insufficient market data' reason",
+                "Return metrics are unavailable without market data, so the pipeline returns HOLD "
+                "without asking the model.",
+                lambda r: _decision(r) == "HOLD"
+                and r["recommendation"]["justification"].startswith("Insufficient market data"),
             ),
         ],
     ),
@@ -334,7 +414,7 @@ LLM_SCENARIOS = [
         skip_reason=(
             "The conflicting-evidence check relied on two AI-written Hinjewadi analyst notes "
             "that were moved to rag_corpus_legacy/; the check is disabled until it is "
-            "redesigned for the real corpus (5 of 6 guardrail rule checks are active)."
+            "redesigned for the real corpus (7 of 8 guardrail rule checks are active)."
         ),
     ),
 ]

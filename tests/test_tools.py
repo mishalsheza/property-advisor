@@ -110,11 +110,19 @@ def test_investment_metrics_positive_roi_for_high_growth_corridor():
     assert metrics["roi_pct"] > 0
 
 
-def test_investment_metrics_handles_missing_market_data_without_crashing():
+def test_investment_metrics_without_market_data_are_unavailable_not_zero():
     property_data = get_property_data("Muzaffarpur, Bihar")
     metrics = compute_investment_metrics(property_data, {}, budget=3_500_000, horizon_years=5)
-    assert metrics["rental_yield_pct"] == 0.0
-    assert metrics["data_quality_confidence"] < 1.0
+    assert metrics["market_data_available"] is False
+    for key in ("rental_yield_pct", "cash_flow_after_emi_inr", "roi_pct", "roe_pct", "irr_annualised_pct"):
+        assert metrics[key] is None
+        assert key in metrics["unavailable_metrics"]
+    # flags that drive the cash-flow, leverage and hurdle rules are off
+    assert not metrics["irr_below_hurdle"] and not metrics["levered_cash_flow_negative"]
+    # price- and loan-only figures are still computed
+    assert metrics["equity_invested_inr"] == 910_000
+    assert metrics["loan_assumptions"]["monthly_emi_inr"] > 0
+    assert metrics["data_quality_confidence"] == 0.3
 
 
 def test_loan_inputs_default_and_flow_into_metrics():
@@ -151,14 +159,17 @@ def test_outstanding_balance_matches_month_by_month_amortisation():
 def test_return_on_equity_for_whitefield_hand_checked():
     # equity = 20% down (19.0L) + 6% stamp duty & registration (5.7L) = 24.7L;
     # principal repaid over 60 EMIs ~ 8.58L; gain = 52.52L appreciation - 25.28L
-    # cash flow after EMI + 8.58L principal = 35.82L -> 145.0% (19.6%/yr)
+    # cash flow after EMI + 8.58L principal - 5.7L stamp duty = 30.12L -> 121.9% (17.3%/yr).
+    # IRR: -24.7L at month 0, -42,129/month for 60 months, +80.10L (sale - loan) at month 60
+    # -> 1.0216%/month = 12.97%/yr (hand-solved by secant method)
     property_data = get_property_data("Whitefield, Bangalore")
     market_data = get_market_data("Bangalore", "Whitefield", slug="whitefield_bangalore")
     m = compute_investment_metrics(property_data, market_data, budget=9_500_000, horizon_years=5)
     assert m["equity_invested_inr"] == 2_470_000
     assert abs(m["principal_repaid_inr"] - 858_264) < 1
-    assert m["roe_pct"] == 145.02
-    assert m["roe_annualised_pct"] == 19.63
+    assert m["roe_pct"] == 121.94
+    assert m["roe_annualised_pct"] == 17.29
+    assert m["irr_annualised_pct"] == 12.97
     assert m["roi_pct"] == 28.67  # total return on price is unchanged
 
 
