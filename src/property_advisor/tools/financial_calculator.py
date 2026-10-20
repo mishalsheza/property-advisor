@@ -149,6 +149,8 @@ def compute_investment_metrics(
     roi_pct = calculate_roi(total_gain_inr, price_inr)
     break_even_years = calculate_break_even_years(price_inr, unlevered_cash_flow_inr)
     strong_appreciation_evidence = _is_strong_appreciation_evidence(appreciation_pct, roi_pct)
+    monthly_shortfall_inr = round(max(0.0, -annual_cash_flow_inr) / MONTHS_PER_YEAR, 2)
+    shortfall_pct_of_emi = round(monthly_shortfall_inr / monthly_emi_inr * 100, 1) if monthly_emi_inr else 0.0
 
     return {
         "price_inr": price_inr,
@@ -164,6 +166,12 @@ def compute_investment_metrics(
         },
         "unlevered_annual_cash_flow_inr": unlevered_cash_flow_inr,
         "annual_cash_flow_inr": annual_cash_flow_inr,
+        # Explicitly named copies of the two figures above. "annual_cash_flow_inr"
+        # is AFTER the EMI; these names leave no room to confuse the two.
+        "operating_cash_flow_inr": unlevered_cash_flow_inr,
+        "cash_flow_after_emi_inr": annual_cash_flow_inr,
+        "monthly_shortfall_after_emi_inr": monthly_shortfall_inr,
+        "shortfall_pct_of_emi": shortfall_pct_of_emi,
         # Severity / negative_cash_flow describe the property's OPERATING
         # (unlevered) economics — the financing-independent measure of whether
         # the asset itself earns money. The leveraged shortfall is reported

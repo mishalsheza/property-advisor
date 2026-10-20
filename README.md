@@ -79,10 +79,31 @@ strings must match exactly, and unknown metric names count as unsupported. Unsup
 claims trigger re-analysis (max 2 retries); claims still unsupported after that go to the
 human reviewer as `unverified_claims`, shown in the API response and in the report.
 
-**Rule checks (5 of 6 active):** missing property data (→ refuse), missing market data,
-risk score above threshold, negative operating cash flow, confidence below threshold. The
-sixth, the conflicting-evidence check, is **disabled**: it matched two AI-written Hinjewadi
-analyst notes that are no longer in the corpus and needs redesigning for real documents.
+**Free-text check** (`steps/text_claims.py`). The justification and every evidence
+statement are also checked, clause by clause, for directional claims: cash-flow sign
+("positive cash flow" — read as *after EMI* unless it says "operating"/"before loan"),
+risk level (overall score or a named factor such as flood), and yield level or comparison
+with the market average. Comparisons to any benchmark not in state ("above the local
+average ROI") count as unverified. This is keyword matching: it catches the common
+wrong-direction phrasings, not every possible one.
+
+**Leverage rule.** When the monthly shortfall after EMI exceeds
+`LEVERED_SHORTFALL_PCT_OF_EMI` (25%) of the EMI, confidence is capped at
+`LEVERED_SHORTFALL_CONFIDENCE_CAP` (0.75), a warning with both cash-flow figures is always
+appended, and BUY is downgraded to HOLD unless `strong_appreciation_evidence` is true. At
+80% LTV every mock property with market data exceeds 25% (51–87%), so this applies to all
+of them.
+
+**Rule checks (6 of 7 active):** missing property data (→ refuse), missing market data,
+risk score above threshold, negative operating cash flow, shortfall after EMI above the
+leverage threshold, confidence below threshold. The seventh, the conflicting-evidence
+check, is **disabled**: it matched two AI-written Hinjewadi analyst notes that are no
+longer in the corpus and needs redesigning for real documents.
+
+**Cash-flow terms.** *Operating cash flow* = rent − 25% operating expenses, before the loan
+(`operating_cash_flow_inr`). *Cash flow after EMI* = operating cash flow − 12 × EMI
+(`cash_flow_after_emi_inr`; the older `annual_cash_flow_inr` is the same figure). *Total
+ROI over N years* = (appreciation gain + N × cash flow after EMI) ÷ price.
 
 **Outcomes:** refuse (no property data, or no decision/justification) · re-analyse
 (unsupported claims, retries left) · human review (everything else — approval is always
@@ -119,7 +140,8 @@ Provenance, URLs, what was trimmed from each, and known gaps (official RERA Act 
 current RBI housing-finance rules, Karnataka RERA Rules) are in
 [`rag_corpus/sources.md`](src/property_advisor/data/rag_corpus/sources.md). The withdrawn
 RBI circulars start with a "WITHDRAWN / SUPERSEDED" line and must not be quoted as current
-limits.
+limits. To rebuild the corpus and `rbi_hpi.csv` from the PDFs in `raw_docs/`, run
+`scripts/corpus/build.sh` (see [`scripts/corpus/README.md`](scripts/corpus/README.md)).
 
 Retrieval settings are configurable via `.env`: `RAG_CHUNK_SIZE` (800), `RAG_CHUNK_OVERLAP`
 (100), `RAG_TOP_K` (4). The index lives in `chroma_db/` and is rebuilt automatically when

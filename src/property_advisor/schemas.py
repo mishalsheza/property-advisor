@@ -18,6 +18,10 @@ EVIDENCE_METRIC_FIELDS: dict[str, tuple[str, str]] = {
     "roi_pct": ("investment_metrics", "roi_pct"),
     "rental_yield_pct": ("investment_metrics", "rental_yield_pct"),
     "cap_rate_pct": ("investment_metrics", "cap_rate_pct"),
+    "operating_cash_flow_inr": ("investment_metrics", "operating_cash_flow_inr"),
+    "cash_flow_after_emi_inr": ("investment_metrics", "cash_flow_after_emi_inr"),
+    "shortfall_pct_of_emi": ("investment_metrics", "shortfall_pct_of_emi"),
+    # older names for the same two cash-flow figures, still accepted
     "annual_cash_flow_inr": ("investment_metrics", "annual_cash_flow_inr"),
     "unlevered_annual_cash_flow_inr": ("investment_metrics", "unlevered_annual_cash_flow_inr"),
     "break_even_years": ("investment_metrics", "break_even_years"),

@@ -89,12 +89,85 @@ HIGH_FLOOD_RISK = Rule(
 # No mock property has significantly negative *operating* cash flow, so this
 # rule is checked by forcing a BUY through the cash-flow safety net on
 # synthetic metrics (see run_deterministic.py) rather than via a scenario.
-CASH_FLOW_SAFETY_NET = Rule(
-    "significantly negative operating cash flow -> forced BUY is downgraded (not BUY)",
-    "A rental that loses money before financing, without strong appreciation evidence, "
-    "must never be recommended as BUY regardless of what the LLM outputs.",
-    lambda r: _decision(r) != "BUY",
-)
+@dataclass(frozen=True)
+class SafetyNetCase:
+    """A fixed (forced) LLM output pushed through the deterministic safety net
+    and guardrail for a real mock property — checks rules the LLM can't bypass."""
+
+    name: str
+    slug: str
+    forced: dict
+    rules: list[Rule]
+    metric_overrides: dict = field(default_factory=dict)
+
+
+def _confidence(result: dict) -> float:
+    return result.get("recommendation", {}).get("confidence_score", 1.0)
+
+
+def _has_warning(result: dict) -> bool:
+    return "[Warning: cash flow after EMI is negative" in result.get("recommendation", {}).get("justification", "")
+
+
+def _forced_buy(justification: str = "Strong appreciation supports a BUY.") -> dict:
+    return {"decision": "BUY", "justification": justification, "confidence_score": 0.92, "supporting_evidence": []}
+
+
+SAFETY_NET_CASES = [
+    SafetyNetCase(
+        "levered_shortfall_with_strong_appreciation",
+        "whitefield_bangalore",
+        # the reported case: BUY at 92% claiming positive cash flow while cash flow after EMI is -5.06 lakh/yr
+        _forced_buy("Positive cash flow and strong appreciation support a BUY."),
+        [
+            Rule(
+                "BUY kept, confidence <= cap, warning added",
+                "Whitefield's shortfall after EMI is 61.6% of the EMI (> 25%), but strong_appreciation_evidence "
+                "is true, so BUY may stand — with capped confidence and the mandatory warning.",
+                lambda r: _decision(r) == "BUY" and _confidence(r) <= 0.75 and _has_warning(r),
+            ),
+            Rule(
+                "'Positive cash flow' is an unsupported claim -> re-analysis",
+                "Cash flow after EMI is negative, so an unqualified 'positive cash flow' contradicts the data.",
+                lambda r: any(c["metric"] == "text:cash_flow_after_emi" for c in r["guardrail_result"]["unsupported_claims"])
+                and r["guardrail_result"]["status"] == "request_reanalysis",
+            ),
+            Rule(
+                "guardrail reports the leverage shortfall",
+                "The shortfall warning must reach the human reviewer, not only the justification.",
+                lambda r: r["guardrail_result"]["levered_shortfall"] is True,
+            ),
+        ],
+    ),
+    SafetyNetCase(
+        "levered_shortfall_without_strong_appreciation",
+        "worli_mumbai",
+        _forced_buy(),
+        [
+            Rule(
+                "forced BUY downgraded to HOLD, confidence <= cap, warning added",
+                "Worli's shortfall after EMI exceeds 25% of the EMI and strong_appreciation_evidence is false, "
+                "so BUY is not justified.",
+                lambda r: _decision(r) == "HOLD" and _confidence(r) <= 0.75 and _has_warning(r),
+            )
+        ],
+    ),
+    SafetyNetCase(
+        "operating_loss_forced_buy",
+        "worli_mumbai",
+        _forced_buy(),
+        [
+            Rule(
+                "significantly negative operating cash flow -> forced BUY is downgraded (not BUY)",
+                "A rental that loses money before financing, without strong appreciation evidence, must never "
+                "be BUY. (Overridden metric: the calculator's fixed 25% expense ratio can't produce an "
+                "operating loss on real mock data.)",
+                lambda r: _decision(r) != "BUY",
+            )
+        ],
+        metric_overrides={"cash_flow_severity": "significantly_negative", "negative_cash_flow": True},
+    ),
+]
 
 DETERMINISTIC_SCENARIOS = [
     Scenario(
@@ -165,7 +238,13 @@ LLM_SCENARIOS = [
                 "ROI > 15%, strong appreciation evidence and low risk: the prompt reserves AVOID "
                 "for poor deals, so AVOID here would contradict the data.",
                 lambda r: _decision(r) in ("BUY", "HOLD"),
-            )
+            ),
+            Rule(
+                "confidence <= 0.75 and after-EMI warning present",
+                "Cash flow after EMI is -5.06 lakh/yr (61.6% of the EMI): the leverage rule caps "
+                "confidence and makes the warning mandatory whatever the model says.",
+                lambda r: _confidence(r) <= 0.75 and _has_warning(r),
+            ),
         ],
     ),
     Scenario(

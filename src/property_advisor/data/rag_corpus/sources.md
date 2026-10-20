@@ -5,8 +5,8 @@ Every `.txt` file in this folder was converted from a PDF in `raw_docs/` (not co
 issuer, date) added during conversion; RBI LTV circulars also start with a WITHDRAWN line.
 
 URL status: **verified** = fetched or confirmed during the rebuild (2026-10-20);
-**inferred** = built from the document ID in the original filename, not reachable from the build
-machine — check before citing.
+**inferred, not verified** = built from the document ID in the original filename; rbidocs.rbi.org.in
+did not respond, so check before citing; **site returned 403** = the site refused automated checks.
 
 ## Documents
 
@@ -14,7 +14,7 @@ machine — check before citing.
 - **Title:** Master Circular – Housing Finance (RBI/2014-15/68, DBOD.No.DIR.BC.18/08.12.001/2014-15)
 - **Issuer:** Reserve Bank of India, Department of Banking Operations and Development
 - **Date:** July 1, 2014
-- **URL (inferred):** https://rbidocs.rbi.org.in/rdocs/notification/PDFs/68MH01072014F.pdf
+- **URL (inferred, not verified):** https://rbidocs.rbi.org.in/rdocs/notification/PDFs/68MH01072014F.pdf
 - **Type:** Primary
 - **Status:** WITHDRAWN / SUPERSEDED. The PDF carries RBI's "Withdrawn" watermark; later master
   circulars replaced it. Not the current LTV limit.
@@ -28,7 +28,7 @@ machine — check before citing.
 - **Title:** Housing Loans by Commercial Banks – Loan to Value (LTV) Ratio (RBI/2011-12/383, DBOD.No.BP.BC.78/08.12.001/2011-12)
 - **Issuer:** Reserve Bank of India
 - **Date:** February 3, 2012
-- **URL (inferred):** https://rbidocs.rbi.org.in/rdocs/notification/PDFs/HLB03022012.pdf
+- **URL (inferred, not verified):** https://rbidocs.rbi.org.in/rdocs/notification/PDFs/HLB03022012.pdf
 - **Type:** Primary
 - **Status:** WITHDRAWN / SUPERSEDED ("Withdrawn" watermark). Historical reference only.
 - **Trimmed:** footer letterhead, watermark fragments ("W", "ithdr", "aw", "n").
@@ -37,7 +37,7 @@ machine — check before citing.
 - **Title:** Individual Housing Loans: Rationalisation of Risk-Weights and LTV Ratios (RBI/2015-16/200, DBR.BP.BC.No.44/08.12.015/2015-16)
 - **Issuer:** Reserve Bank of India, Department of Banking Regulation
 - **Date:** October 8, 2015
-- **URL (inferred):** https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NT200993E78621BA84ED5BD93E6E70B7C4F33.PDF
+- **URL (inferred, not verified):** https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NT200993E78621BA84ED5BD93E6E70B7C4F33.PDF
 - **Type:** Primary
 - **Status:** WITHDRAWN / SUPERSEDED ("Withdrawn" watermark). Historical reference only.
 - **Trimmed:** Hindi/English footer letterhead, watermark fragments (including a stray "W" in the
@@ -47,7 +47,7 @@ machine — check before citing.
 - **Title:** All-India House Price Index for Q3:2025-26 / Q4:2025-26 / Q1:2026-27
 - **Issuer:** Reserve Bank of India, Department of Communication (press releases 2025-2026/2167, 2026-2027/355, 2026-2027/958)
 - **Date:** February 25, 2026 / May 29, 2026 / August 24, 2026
-- **URL (inferred):**
+- **URL (inferred, not verified):**
   - https://rbidocs.rbi.org.in/rdocs/PressRelease/PDFs/PR2167E2AC62A4A8794DCFB241D037047AC6B8.PDF
   - https://rbidocs.rbi.org.in/rdocs/PressRelease/PDFs/PR355BA75B6F6F6514EF69A5D859B97C10F89.PDF
   - https://rbidocs.rbi.org.in/rdocs/PressRelease/PDFs/PR9588D145628AA3348AC8BD8DB564DF6DD75.PDF
@@ -60,7 +60,7 @@ machine — check before citing.
 - **Title:** Income from House Property (tax reckoner pages: "Computation of Income from House Property" and "Interest on Housing Loan")
 - **Issuer:** Income Tax Department, Ministry of Finance, Government of India
 - **Date:** pages "Last Updated: May 27th, 2026" (printed October 2026)
-- **URL (inferred):** https://incometaxindia.gov.in — tax information & services › reckoner › house property (exact page URL not recorded in the PDFs; the site returned 403 to automated checks)
+- **URL (site returned 403):** https://incometaxindia.gov.in — tax information & services › reckoner › house property (exact page URL not recorded in the PDFs; not verified)
 - **Type:** Primary
 - **Trimmed:** merged from two PDFs (`House Property.pdf`, `House Property2.pdf`). The left
   navigation sidebar, top menu ("Home", "Tax Information & Services", "Reckoner"), footer

@@ -56,9 +56,11 @@ def main() -> None:
         print(
             f"decision={rec.get('decision')} confidence={rec.get('confidence_score')} "
             f"risk={result.get('risk_assessment', {}).get('risk_score')} "
-            f"reanalyses={result.get('reanalysis_retry_count')} "
+            f"reanalyses={result.get('reanalysis_retry_count', 0)} "
             f"unverified_claims={len(result.get('unverified_claims', []))}"
         )
+        for item in rec.get("supporting_evidence", []):
+            print(f"  evidence: {item.get('metric')}={item.get('cited_value')!r}")
         failures = check_rules(scenario.rules, result)
         if failures:
             print("FAIL")

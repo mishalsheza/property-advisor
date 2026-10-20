@@ -209,7 +209,8 @@ async def root():
             "frontend_dir": str(FRONTEND_DIR),
             "path": str(index_path)
         }
-    return FileResponse(str(index_path))
+    # no-cache: browsers must revalidate, so frontend fixes show up on a normal refresh
+    return FileResponse(str(index_path), headers={"Cache-Control": "no-cache"})
 
 
 # Mount static directories

@@ -85,7 +85,7 @@
     font-weight: 600;
   }
 
-  input, select {
+  input, select, textarea {
     background: #0d1218;
     border: 1px solid var(--panel-border);
     border-radius: 8px;
@@ -96,7 +96,7 @@
     transition: border-color 0.15s;
   }
 
-  input:focus, select:focus { border-color: var(--accent); }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 
   button#analyzeBtn {
     grid-column: 1 / -1;
@@ -231,6 +231,12 @@
   #rejectBtn { background: transparent; color: #f87171; border: 1px solid var(--avoid); }
   #rejectBtn:hover { background: var(--avoid-bg); }
 
+  .reject-panel { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .reject-panel textarea { resize: vertical; font-family: inherit; }
+  .reject-panel .actions-row { margin-top: 6px; }
+  #rejectSubmitBtn { background: var(--avoid); color: white; }
+  #rejectCancelBtn { background: transparent; color: var(--text-muted); border: 1px solid var(--panel-border); }
+
   .status-banner {
     text-align: center;
     font-size: 0.85rem;
@@ -344,15 +350,19 @@
       </div>
       <div class="metric-box">
         <div class="value" id="metricRoi">—</div>
-        <div class="label">ROI</div>
+        <div class="label" id="metricRoiLabel">Total ROI</div>
       </div>
       <div class="metric-box">
         <div class="value" id="metricYield">—</div>
         <div class="label">Rental Yield</div>
       </div>
       <div class="metric-box">
+        <div class="value" id="metricOperatingCashFlow">—</div>
+        <div class="label">Operating cash flow (before loan), per year</div>
+      </div>
+      <div class="metric-box">
         <div class="value" id="metricCashFlow">—</div>
-        <div class="label">Annual Cash Flow</div>
+        <div class="label">Cash flow after EMI, per year</div>
       </div>
     </div>
 
@@ -367,6 +377,16 @@
     <div id="actionsRow" class="actions-row" style="display:none;">
       <button id="approveBtn" type="button">Approve</button>
       <button id="rejectBtn" type="button">Reject</button>
+    </div>
+
+    <!-- Inline instead of window.prompt(), which embedded browsers (e.g. VS Code) block silently -->
+    <div id="rejectPanel" class="reject-panel" style="display:none;">
+      <label for="rejectFeedback">Why are you rejecting this recommendation? Your feedback is sent back for re-analysis.</label>
+      <textarea id="rejectFeedback" rows="3" placeholder="e.g. weigh the flood risk more heavily"></textarea>
+      <div class="actions-row">
+        <button id="rejectSubmitBtn" type="button">Send for re-analysis</button>
+        <button id="rejectCancelBtn" type="button">Cancel</button>
+      </div>
     </div>
 
     <div id="downloadsRow" class="downloads-row" style="display:none;">
@@ -424,6 +444,10 @@
   const downloadsRow = mustFind("downloadsRow");
   const approveBtn = mustFind("approveBtn");
   const rejectBtn = mustFind("rejectBtn");
+  const rejectPanel = mustFind("rejectPanel");
+  const rejectFeedback = mustFind("rejectFeedback");
+  const rejectSubmitBtn = mustFind("rejectSubmitBtn");
+  const rejectCancelBtn = mustFind("rejectCancelBtn");
 
   console.log("FORM FOUND:", form);
 
@@ -436,6 +460,8 @@
     analyzeBtn.disabled = loading;
     approveBtn.disabled = loading;
     rejectBtn.disabled = loading;
+    rejectSubmitBtn.disabled = loading;
+    rejectCancelBtn.disabled = loading;
     statusEl.innerHTML = loading
       ? `<span class="spinner"></span>${message || "Running analysis... this can take 10-30 seconds."}`
       : "";
@@ -471,7 +497,14 @@
 
     document.getElementById("metricRisk").textContent = risk.risk_score !== undefined ? risk.risk_score : "N/A";
     document.getElementById("metricRoi").textContent = metrics.roi_pct !== undefined ? metrics.roi_pct + "%" : "N/A";
+    document.getElementById("metricRoiLabel").textContent =
+      metrics.horizon_years ? `Total ROI over ${metrics.horizon_years} years` : "Total ROI";
     document.getElementById("metricYield").textContent = metrics.rental_yield_pct !== undefined ? metrics.rental_yield_pct + "%" : "N/A";
+
+    // annual_cash_flow_inr is AFTER the EMI; operating_cash_flow_inr is before the loan
+    const operatingEl = document.getElementById("metricOperatingCashFlow");
+    operatingEl.textContent = formatInr(metrics.operating_cash_flow_inr);
+    operatingEl.className = "value " + (metrics.operating_cash_flow_inr < 0 ? "negative" : "positive");
 
     const cashFlowEl = document.getElementById("metricCashFlow");
     cashFlowEl.textContent = formatInr(metrics.annual_cash_flow_inr);
@@ -518,6 +551,7 @@
       data.guardrail_result || {}
     );
     actionsRow.style.display = "flex";
+    hideRejectPanel();
     downloadsRow.style.display = "none";
     console.log("APPROVAL UI RENDERED. results display:", resultsEl.style.display, "actionsRow display:", actionsRow.style.display);
   }
@@ -534,10 +568,13 @@
     document.getElementById("metricRisk").textContent = "—";
     document.getElementById("metricRoi").textContent = "—";
     document.getElementById("metricYield").textContent = "—";
+    document.getElementById("metricOperatingCashFlow").textContent = "—";
     document.getElementById("metricCashFlow").textContent = "—";
+    document.getElementById("metricRoiLabel").textContent = "Total ROI";
     document.getElementById("evidenceList").innerHTML = "";
     document.getElementById("guardrailSection").style.display = "none";
     actionsRow.style.display = "none";
+    hideRejectPanel();
     downloadsRow.style.display = "none";
   }
 
@@ -553,6 +590,7 @@
       finalReport.guardrail_result || {}
     );
     actionsRow.style.display = "none";
+    hideRejectPanel();
 
     if (reportPaths) {
       downloadsRow.style.display = "flex";
@@ -677,15 +715,29 @@
     }
   });
 
-  rejectBtn.addEventListener("click", async () => {
+  function hideRejectPanel() {
+    rejectPanel.style.display = "none";
+    rejectFeedback.value = "";
+  }
+
+  rejectBtn.addEventListener("click", () => {
     console.log("REJECT CLICKED", "thread_id:", currentThreadId);
     if (!currentThreadId) {
       console.warn("REJECT CLICKED WITH NO ACTIVE THREAD — ignoring");
       return;
     }
-    const feedback = window.prompt("Feedback for re-analysis (why are you rejecting this recommendation?):", "");
-    console.log("REJECT FEEDBACK PROMPT RESULT", feedback);
-    if (feedback === null) return; // user cancelled the prompt
+    rejectPanel.style.display = "flex";
+    // the panel opens below the buttons, often below the fold — bring it into view
+    rejectPanel.scrollIntoView({ behavior: "smooth", block: "center" });
+    rejectFeedback.focus({ preventScroll: true });
+  });
+
+  rejectCancelBtn.addEventListener("click", hideRejectPanel);
+
+  rejectSubmitBtn.addEventListener("click", async () => {
+    if (!currentThreadId) return;
+    const feedback = rejectFeedback.value.trim();
+    console.log("REJECT SUBMITTED", "thread_id:", currentThreadId, "feedback:", feedback);
     clearError();
     setLoading(true, "Re-running analysis with your feedback...");
     try {
@@ -693,6 +745,7 @@
       console.log("REJECT RESPONSE", data);
       if (data.approval_required) {
         renderPendingApproval(data);
+        setStatusBanner("Re-analysed with your feedback — review the updated recommendation.", "pending");
       } else {
         renderRefused(data.final_report || {});
       }

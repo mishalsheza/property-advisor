@@ -18,8 +18,13 @@ from property_advisor.agents import recommendation_agent as rec_module  # noqa: 
 from property_advisor.graph import build_graph  # noqa: E402
 from property_advisor.schemas import RecommendationOutput  # noqa: E402
 from property_advisor.state import PropertyState  # noqa: E402
+from property_advisor.steps.guardrail_step import guardrail_step  # noqa: E402
+from property_advisor.tools.financial_calculator import compute_investment_metrics  # noqa: E402
+from property_advisor.tools.market_data_tool import get_market_data  # noqa: E402
+from property_advisor.tools.property_data_tool import _PROPERTIES as PROPERTIES  # noqa: E402
+from property_advisor.tools.risk_data_tool import compute_risk_score, get_risk_data  # noqa: E402
 
-from scenarios import CASH_FLOW_SAFETY_NET, DETERMINISTIC_SCENARIOS, check_rules  # noqa: E402
+from scenarios import DETERMINISTIC_SCENARIOS, SAFETY_NET_CASES, check_rules  # noqa: E402
 
 
 def _blocked_llm(*_args, **_kwargs):
@@ -32,20 +37,29 @@ def run_scenario(graph, scenario) -> dict:
     return graph.invoke(scenario.input, config, interrupt_before=interrupt_before)
 
 
-def run_safety_net_check() -> dict:
-    state = PropertyState(
-        property_address="synthetic",
-        budget=10_000_000,
-        investment_strategy="rental",
-        investment_metrics={
-            "negative_cash_flow": True,
-            "cash_flow_severity": "significantly_negative",
-            "strong_appreciation_evidence": False,
-            "levered_cash_flow_negative": True,
-        },
+def _state_for(slug: str, metric_overrides: dict) -> PropertyState:
+    """State as the deterministic steps would compute it for a mock property."""
+    property_data = {**PROPERTIES[slug], "locality_slug": slug}
+    market_data = get_market_data(property_data["city"], property_data["locality"], slug=slug)
+    raw_risk = get_risk_data(slug)
+    risk = {**compute_risk_score(raw_risk), "raw_indicators": raw_risk}
+    metrics = compute_investment_metrics(property_data, market_data, property_data["price_inr"], 5)
+    return PropertyState(
+        property_address=f"{property_data['locality']}, {property_data['city']}",
+        budget=property_data["price_inr"],
+        property_data=property_data,
+        market_data=market_data,
+        investment_metrics={**metrics, **metric_overrides},
+        risk_assessment=risk,
     )
-    forced_buy = RecommendationOutput(decision="BUY", justification="Forced BUY.", confidence_score=0.9)
-    return {"recommendation": rec_module._enforce_cashflow_safety_net(forced_buy, state).model_dump()}
+
+
+def run_safety_net_case(case) -> dict:
+    state = _state_for(case.slug, case.metric_overrides)
+    forced = RecommendationOutput(**case.forced)
+    recommendation = rec_module._enforce_cashflow_safety_net(forced, state).model_dump()
+    guardrail = guardrail_step(state.model_copy(update={"recommendation": recommendation}))
+    return {"recommendation": recommendation, "guardrail_result": guardrail["guardrail_result"]}
 
 
 def run_all() -> list[tuple[str, list[str]]]:
@@ -53,7 +67,7 @@ def run_all() -> list[tuple[str, list[str]]]:
     rec_module.get_llm = _blocked_llm
     graph = build_graph()
     outcomes = [(s.name, check_rules(s.rules, run_scenario(graph, s))) for s in DETERMINISTIC_SCENARIOS]
-    outcomes.append(("cash_flow_safety_net", check_rules([CASH_FLOW_SAFETY_NET], run_safety_net_check())))
+    outcomes += [(c.name, check_rules(c.rules, run_safety_net_case(c))) for c in SAFETY_NET_CASES]
     return outcomes
 
 

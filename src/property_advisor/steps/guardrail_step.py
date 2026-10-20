@@ -2,9 +2,12 @@
 
 Deterministic step (no LLM): validates the Recommendation Agent's output
 before it can reach a human reviewer. Runs the rule checks (missing data,
-risk score, negative cash flow, confidence threshold; the conflicting-evidence
-check is currently disabled — see CONFLICT_CHECK_ENABLED) and a claim check that compares every cited
-evidence value against the value the deterministic steps computed.
+risk score, negative operating cash flow, large shortfall after EMI,
+confidence threshold; the conflicting-evidence check is currently disabled —
+see CONFLICT_CHECK_ENABLED) and a claim check that compares every cited
+evidence value against the value the deterministic steps computed, plus
+directional wording in the justification and evidence statements
+(see text_claims.py).
 
 Routing outcomes (see graph.py):
 - "request_reanalysis": loop back to the Recommendation Agent (capped by
@@ -25,12 +28,14 @@ from langsmith import traceable
 
 from property_advisor.config import (
     GUARDRAIL_CONFIDENCE_THRESHOLD,
+    LEVERED_SHORTFALL_PCT_OF_EMI,
     MAX_REANALYSIS_RETRIES,
     RISK_HUMAN_REVIEW_THRESHOLD,
 )
 from property_advisor.logging_utils import logger, timed_node
 from property_advisor.schemas import EVIDENCE_METRIC_FIELDS, RAG_SOURCE_METRIC
 from property_advisor.state import PropertyState
+from property_advisor.steps.text_claims import check_text_claims
 
 # Conflicting-evidence check: DISABLED.
 # It matched a hard-coded pair of AI-written Hinjewadi analyst notes that
@@ -125,6 +130,9 @@ def check_claims(state: PropertyState) -> list[dict[str, Any]]:
                     "reason": reason,
                 }
             )
+        # directional wording in the statement itself ("yield below the local average")
+        unsupported += check_text_claims(item.get("statement", ""), state)
+    unsupported += check_text_claims(state.recommendation.get("justification", ""), state)
     return unsupported
 
 
@@ -144,10 +152,20 @@ def guardrail_step(state: PropertyState) -> dict:
     if high_risk:
         reasons.append(f"Risk score {risk_score} exceeds the human-review threshold of {RISK_HUMAN_REVIEW_THRESHOLD}.")
 
-    negative_cash_flow = bool(state.investment_metrics.get("negative_cash_flow"))
+    metrics = state.investment_metrics
+    negative_cash_flow = bool(metrics.get("negative_cash_flow"))
     if negative_cash_flow:
         reasons.append(
-            f"Negative annual cash flow (INR {state.investment_metrics.get('annual_cash_flow_inr')})."
+            f"Negative operating cash flow before the loan (INR {metrics.get('operating_cash_flow_inr')} per year)."
+        )
+
+    shortfall_pct = float(metrics.get("shortfall_pct_of_emi") or 0)
+    levered_shortfall = bool(metrics.get("levered_cash_flow_negative")) and shortfall_pct > LEVERED_SHORTFALL_PCT_OF_EMI
+    if levered_shortfall:
+        reasons.append(
+            f"Cash flow after EMI is negative (INR {metrics.get('cash_flow_after_emi_inr'):,.0f} per year; "
+            f"monthly shortfall INR {metrics.get('monthly_shortfall_after_emi_inr'):,.0f} = {shortfall_pct:g}% of the EMI, "
+            f"above the {LEVERED_SHORTFALL_PCT_OF_EMI:g}% limit): confidence capped, BUY needs strong appreciation evidence."
         )
 
     confidence = state.recommendation.get("confidence_score", 0.0)
@@ -188,6 +206,7 @@ def guardrail_step(state: PropertyState) -> dict:
         state.requires_human_review
         or high_risk
         or negative_cash_flow
+        or levered_shortfall
         or confidence_below_threshold
         or missing_market_data
         or conflicting_evidence
@@ -201,6 +220,7 @@ def guardrail_step(state: PropertyState) -> dict:
         "missing_market_data": missing_market_data,
         "high_risk": high_risk,
         "negative_cash_flow": negative_cash_flow,
+        "levered_shortfall": levered_shortfall,
         "confidence_below_threshold": confidence_below_threshold,
         "conflicting_evidence": conflicting_evidence,
         "conflict_check": "enabled" if CONFLICT_CHECK_ENABLED else "disabled",

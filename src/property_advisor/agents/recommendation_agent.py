@@ -6,8 +6,10 @@ evidence into a BUY/HOLD/AVOID call with justification, supporting evidence,
 and a confidence score. The prompt explicitly grounds the model in the
 already-computed numbers so it cannot invent its own financial figures.
 
-Rental-strategy cash-flow safety net: negative
-cash flow must never be silently waved through into a BUY. The prompt tells
+Cash-flow safety net: negative cash flow must never be silently waved
+through into a BUY. Operating losses (rental strategy) and large shortfalls
+after EMI (any strategy) force a downgrade unless appreciation evidence is
+strong, the latter also caps confidence and always adds a warning. The prompt tells
 the model the rules, and a deterministic post-processing step enforces them
 regardless of what the model actually outputs — financial decision rules are
 not left to LLM discretion alone, consistent with this project's preference
@@ -23,21 +25,43 @@ from __future__ import annotations
 
 import json
 
-from property_advisor.config import get_llm
+from property_advisor.config import (
+    LEVERED_SHORTFALL_CONFIDENCE_CAP,
+    LEVERED_SHORTFALL_PCT_OF_EMI,
+    get_llm,
+)
 from property_advisor.logging_utils import timed_node
 from property_advisor.schemas import EVIDENCE_METRICS, RecommendationOutput
 from property_advisor.state import PropertyState
+
+# The older ambiguous cash-flow names are still accepted by the guardrail but
+# not offered to the model.
+PROMPT_EVIDENCE_METRICS = [
+    m for m in EVIDENCE_METRICS if m not in ("annual_cash_flow_inr", "unlevered_annual_cash_flow_inr")
+]
 
 SYSTEM_PROMPT = """Indian real-estate Recommendation Agent. Output BUY, HOLD, or AVOID.
 
 Decide from the WHOLE picture, never a single metric. Use ONLY the numbers \
 given below; never invent figures. Weigh together:
-- Total return: roi_pct (already includes 5-yr appreciation AND cash flow) and \
-the market appreciation rate.
-- Income: rental_yield_pct and cash_flow_severity (this describes OPERATING \
-cash flow, before any loan).
-- Risk: risk_score (0-100, higher = worse) and data_quality_confidence.
+- Total return: roi_pct is the TOTAL ROI over roi_horizon_years (appreciation \
+plus cash flow after EMI, divided by price) and the market appreciation rate.
+- Income: rental_yield_pct; operating_cash_flow_inr (rent minus expenses, BEFORE \
+the loan; cash_flow_severity describes this figure); cash_flow_after_emi_inr \
+(what the buyer actually nets AFTER paying the EMI).
+- Risk: risk_score (0-100, higher = worse), the per-factor indicators, and \
+data_quality_confidence.
 - RAG evidence: let supporting or contradicting context move the call.
+
+Wording rules (checked automatically; violations are rejected):
+- Never say "positive cash flow" or "negative cash flow" without saying which: \
+"operating cash flow (before loan)" or "cash flow after EMI". If \
+cash_flow_after_emi_inr < 0, do not describe the property as cash-flow positive.
+- Describe risk and yield only in ways the numbers support (e.g. "low risk" only \
+for a low risk_score).
+- Do not compare to benchmarks that are not in the data. The only benchmark \
+given is the market's rental_yield_avg_pct; never mention local/city averages \
+for ROI, price or anything else.
 
 Guidance (lean, not rigid thresholds):
 - Strong total return + solid yield + acceptable risk -> lean BUY.
@@ -46,18 +70,20 @@ Guidance (lean, not rigid thresholds):
 yield, or high risk -- NOT merely because a leveraged buyer sees negative \
 monthly cash flow.
 
-Financing caveat: levered_cash_flow_negative=true means the EMI (at the Loan \
-terms given below) exceeds net rent. This is normal for Indian rentals \
-(appreciation, not monthly cash flow, drives most returns). Treat it as a confidence/risk caveat worth a \
-mention -- it does NOT by itself justify AVOID, and a strong total return can \
-still warrant BUY.
+Financing caveat: cash_flow_after_emi_inr < 0 means the EMI (at the Loan \
+terms given below) exceeds net rent and the buyer must fund the shortfall. \
+This is common for Indian rentals (appreciation, not monthly cash flow, drives \
+most returns): mention it -- it does NOT by itself justify AVOID. When \
+shortfall_pct_of_emi > """ + f"{LEVERED_SHORTFALL_PCT_OF_EMI:g}" + """, BUY additionally \
+requires strong_appreciation_evidence=true and confidence is capped at \
+""" + f"{LEVERED_SHORTFALL_CONFIDENCE_CAP:g}" + """.
 
 Operating cash-flow rule (mandatory): cash_flow_severity="significantly_negative" \
 (the asset loses money even before financing) -> decision must be HOLD or AVOID \
 UNLESS strong_appreciation_evidence=true.
 
 Evidence: up to 3 supporting_evidence items, each {metric, cited_value, statement}. \
-metric must be one of: """ + ", ".join(EVIDENCE_METRICS) + """. cited_value must be \
+metric must be one of: """ + ", ".join(PROMPT_EVIDENCE_METRICS) + """. cited_value must be \
 copied exactly from the Metrics/Risk/Market/Property data below (for rag_source: \
 the bracketed RAG filename). Every cited value is checked against the computed \
 data; anything else is rejected.
@@ -65,8 +91,10 @@ data; anything else is rejected.
 Be concise. Max 2 sentences in justification."""
 
 
-# Structured evidence items need more room than the global default cap.
-RECOMMENDATION_MAX_TOKENS = 500
+# Structured evidence items need more room than the global default cap, and on
+# reasoning models (e.g. openai/gpt-oss-120b) hidden reasoning tokens count
+# against this limit too — 500 truncated the JSON mid-string.
+RECOMMENDATION_MAX_TOKENS = 2000
 
 
 def _format_rag_context(rag_context: list[dict], limit: int = 3, snippet_len: int = 220) -> str:
@@ -83,21 +111,40 @@ def _compact_metrics(metrics: dict) -> dict:
         "roi_pct",
         "rental_yield_pct",
         "cap_rate_pct",
-        "annual_cash_flow_inr",
-        "unlevered_annual_cash_flow_inr",
+        "operating_cash_flow_inr",
         "cash_flow_severity",
-        "negative_cash_flow",
-        "levered_cash_flow_negative",
+        "cash_flow_after_emi_inr",
+        "shortfall_pct_of_emi",
         "strong_appreciation_evidence",
         "break_even_years",
         "data_quality_confidence",
     )
-    return {k: metrics[k] for k in keys if k in metrics}
+    compact = {k: metrics[k] for k in keys if k in metrics}
+    if "horizon_years" in metrics:
+        compact["roi_horizon_years"] = metrics["horizon_years"]
+    if "loan_assumptions" in metrics:
+        compact["monthly_emi_inr"] = metrics["loan_assumptions"].get("monthly_emi_inr")
+    return compact
 
 
 def _compact_risk(risk: dict) -> dict:
     keys = ("risk_score", "data_quality_confidence")
-    return {k: risk[k] for k in keys if k in risk}
+    compact = {k: risk[k] for k in keys if k in risk}
+    if risk.get("raw_indicators"):
+        compact["indicators"] = risk["raw_indicators"]
+    return compact
+
+
+def cash_flow_warning(state: PropertyState) -> str:
+    """The mandatory after-EMI cash-flow warning (also used by the guardrail)."""
+    m = state.investment_metrics
+    return (
+        f"[Warning: cash flow after EMI is negative: INR {m.get('cash_flow_after_emi_inr'):,.0f} per year "
+        f"(monthly shortfall INR {m.get('monthly_shortfall_after_emi_inr'):,.0f}, "
+        f"{m.get('shortfall_pct_of_emi'):g}% of the EMI at {state.loan_to_value_pct:g}% LTV). "
+        f"Operating cash flow before the loan is INR {m.get('operating_cash_flow_inr'):,.0f} per year. "
+        f"The buyer must fund the shortfall from other income.]"
+    )
 
 
 def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertyState) -> RecommendationOutput:
@@ -107,46 +154,51 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
     the model doesn't comply.
     """
     metrics = state.investment_metrics
-    if not metrics or state.investment_strategy != "rental":
+    if not metrics:
         return result
 
-    # negative_cash_flow / significantly_negative now describe OPERATING
-    # (unlevered) economics: an asset that loses money before any financing is
-    # a genuine red flag. The leveraged shortfall is a separate, expected
-    # financing caveat that should temper confidence, not force a downgrade.
-    operating_negative = bool(metrics.get("negative_cash_flow"))
+    # significantly_negative describes OPERATING (unlevered) economics: an
+    # asset that loses money before any financing is a genuine red flag. The
+    # shortfall after EMI is a separate financing caveat, handled by the
+    # leverage rule below.
     significantly_negative = metrics.get("cash_flow_severity") == "significantly_negative"
     strong_appreciation = bool(metrics.get("strong_appreciation_evidence"))
     levered_negative = bool(metrics.get("levered_cash_flow_negative"))
+    shortfall_pct = float(metrics.get("shortfall_pct_of_emi") or 0)
+    heavy_shortfall = levered_negative and shortfall_pct > LEVERED_SHORTFALL_PCT_OF_EMI
 
     decision = result.decision
     confidence = result.confidence_score
     justification = result.justification
-    overridden = False
 
-    if significantly_negative and not strong_appreciation and decision == "BUY":
+    if state.investment_strategy == "rental" and significantly_negative and not strong_appreciation and decision == "BUY":
         # Only override when the property loses money on an OPERATING basis and
         # appreciation isn't strong enough to compensate — not for ordinary
         # leveraged-cash-flow negativity, which is normal for Indian rentals.
         decision = "HOLD"
         confidence = round(min(confidence, 0.55), 2)
-        overridden = True
         justification = (
             f"{justification} [Guardrail override: the Recommendation Agent's original BUY call "
             f"was downgraded to HOLD because the property's operating (pre-financing) cash flow is "
             f"significantly negative and strong_appreciation_evidence was not met.]"
         )
 
-    if not overridden and levered_negative and "cash flow" not in justification.lower():
-        # Surface the financing caveat and trim confidence slightly — but never
-        # force a downgrade on leverage alone.
-        confidence = round(confidence * 0.95, 2)
-        justification = (
-            f"{justification} [Note: at {state.loan_to_value_pct:g}% loan-to-value the EMI exceeds net rent (levered annual "
-            f"cash flow INR {metrics.get('annual_cash_flow_inr')}); Indian rentals typically rely on "
-            f"appreciation rather than monthly cash flow, so this is a confidence caveat, not a "
-            f"disqualifier.]"
-        )
+    if heavy_shortfall:
+        # Leverage rule: a large monthly shortfall after EMI caps confidence,
+        # always carries a warning, and BUY must rest on strong appreciation.
+        if decision == "BUY" and not strong_appreciation:
+            decision = "HOLD"
+            justification = (
+                f"{justification} [Guardrail override: BUY was downgraded to HOLD because the "
+                f"monthly shortfall after EMI is {shortfall_pct:g}% of the EMI and "
+                f"strong_appreciation_evidence was not met.]"
+            )
+        confidence = round(min(confidence, LEVERED_SHORTFALL_CONFIDENCE_CAP), 2)
+
+    if levered_negative:
+        # Mandatory, regardless of how the model worded its justification (the
+        # old version skipped this whenever the text merely said "cash flow").
+        justification = f"{justification} {cash_flow_warning(state)}"
 
     return RecommendationOutput(
         decision=decision,
