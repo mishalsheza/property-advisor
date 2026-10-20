@@ -18,4 +18,5 @@ the original AI-written notes for reference; they are no longer indexed.
 ## Price index
 
 `rbi_hpi.csv` is parsed from the RBI House Price Index publication (city, quarter,
-index_value). It is real data but is not yet used by the pipeline.
+index_value, base_year, provisional). The market step uses the base 2022-23 series for
+city-level appreciation rates, replacing the synthetic mock rate wherever a city has a series.

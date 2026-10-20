@@ -102,17 +102,27 @@ def test_guardrail_checks_justification_and_statements(whitefield):
     assert metrics == ["text:benchmark", "text:cash_flow_after_emi"]
 
 
-def test_leverage_rule_caps_confidence_and_always_warns(whitefield):
-    # justification already says "cash flow": the old safety net skipped its note in exactly this case
+def test_leverage_warning_tier_always_warns_without_capping(whitefield):
+    # 61.6% of EMI: warning tier only. The justification already says "cash flow":
+    # an earlier safety net skipped its note in exactly this case.
     result = _enforce_cashflow_safety_net(
         RecommendationOutput(decision="BUY", justification="Positive cash flow.", confidence_score=0.92), whitefield
     )
-    assert result.decision == "BUY"  # strong appreciation evidence
-    assert result.confidence_score <= 0.75
+    assert result.decision == "BUY"
+    assert result.confidence_score == 0.92
     assert "[Warning: cash flow after EMI is negative: INR -505,550 per year" in result.justification
 
 
-def test_leverage_rule_downgrades_buy_without_strong_appreciation():
+def test_no_warning_below_warning_tier(whitefield):
+    metrics = {**whitefield.investment_metrics, "shortfall_pct_of_emi": 20.0}
+    result = _enforce_cashflow_safety_net(
+        RecommendationOutput(decision="BUY", justification="Strong appreciation.", confidence_score=0.92),
+        whitefield.model_copy(update={"investment_metrics": metrics}),
+    )
+    assert "[Warning" not in result.justification
+
+
+def test_leverage_cap_tier_downgrades_buy_without_strong_appreciation():
     worli = _state("Worli, Mumbai", "Mumbai", "Worli", "worli_mumbai")
     result = _enforce_cashflow_safety_net(
         RecommendationOutput(decision="BUY", justification="Prime location.", confidence_score=0.92), worli

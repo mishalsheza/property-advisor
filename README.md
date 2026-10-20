@@ -87,12 +87,13 @@ with the market average. Comparisons to any benchmark not in state ("above the l
 average ROI") count as unverified. This is keyword matching: it catches the common
 wrong-direction phrasings, not every possible one.
 
-**Leverage rule.** When the monthly shortfall after EMI exceeds
-`LEVERED_SHORTFALL_PCT_OF_EMI` (25%) of the EMI, confidence is capped at
-`LEVERED_SHORTFALL_CONFIDENCE_CAP` (0.75), a warning with both cash-flow figures is always
-appended, and BUY is downgraded to HOLD unless `strong_appreciation_evidence` is true. At
-80% LTV every mock property with market data exceeds 25% (51–87%), so this applies to all
-of them.
+**Leverage rule** (by monthly shortfall after EMI, as a % of the EMI):
+- above `LEVERED_SHORTFALL_WARN_PCT_OF_EMI` (25%): a warning with both cash-flow figures is
+  always appended (all 34 mock properties with market data, at 51–87%);
+- above `LEVERED_SHORTFALL_CAP_PCT_OF_EMI` (70%): confidence is also capped at
+  `LEVERED_SHORTFALL_CONFIDENCE_CAP` (0.75) and BUY is downgraded to HOLD unless
+  `strong_appreciation_evidence` is true (6 properties: Dwarka, Kothrud, Thane West, Dadar,
+  Andheri West, Worli).
 
 **Rule checks (6 of 7 active):** missing property data (→ refuse), missing market data,
 risk score above threshold, negative operating cash flow, shortfall after EMI above the
@@ -103,7 +104,21 @@ longer in the corpus and needs redesigning for real documents.
 **Cash-flow terms.** *Operating cash flow* = rent − 25% operating expenses, before the loan
 (`operating_cash_flow_inr`). *Cash flow after EMI* = operating cash flow − 12 × EMI
 (`cash_flow_after_emi_inr`; the older `annual_cash_flow_inr` is the same figure). *Total
-ROI over N years* = (appreciation gain + N × cash flow after EMI) ÷ price.
+return on price over N years* (the original ROI, labelled "unlevered view") =
+(appreciation gain + N × cash flow after EMI) ÷ price. *Return on equity over N years* =
+(appreciation gain + N × cash flow after EMI + loan principal repaid by year N) ÷ equity
+invested, where equity = down payment + stamp duty & registration
+(`STAMP_DUTY_REGISTRATION_PCT`, default 6% of price); shown with its compound annual rate.
+Example (Whitefield, 80% LTV, 9%, 20 yrs): equity ₹24.7L, principal repaid over 5 years
+₹8.58L.
+
+**Appreciation rate.** Taken from the RBI House Price Index (`data/rbi_hpi.csv`, base
+2022-23 series only): annualised growth over the last `HPI_WINDOW_QUARTERS` (12) quarters
+for the property's city. It is city-level, so data quality confidence is capped at
+`HPI_CITY_LEVEL_CONFIDENCE` (0.85), and windows that include provisional quarters are
+flagged. Cities without an HPI series (Gurgaon, Navi Mumbai, Surat, Indore, Bhubaneswar,
+Goa, Coimbatore, Dehradun; Zirakpur, which is in Mohali district) fall back to the
+synthetic mock rate, labelled as such in the guardrail notes and the report.
 
 **Outcomes:** refuse (no property data, or no decision/justification) · re-analyse
 (unsupported claims, retries left) · human review (everything else — approval is always
@@ -117,7 +132,8 @@ required before a report).
   secondary documents (below).
 - `src/property_advisor/data/rbi_hpi.csv` — RBI House Price Index, city × quarter
   (`city, quarter, index_value, base_year, provisional`); three series with base years
-  2008-09, 2010-11 and 2022-23, which must not be mixed. Not yet used by the pipeline.
+  2008-09, 2010-11 and 2022-23, which must not be mixed. The market step uses the 2022-23
+  series for appreciation rates (see Guardrail › Appreciation rate).
 - `src/property_advisor/data/rag_corpus_legacy/` — the original AI-written notes, kept for
   reference only; not indexed.
 

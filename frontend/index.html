@@ -350,7 +350,11 @@
       </div>
       <div class="metric-box">
         <div class="value" id="metricRoi">—</div>
-        <div class="label" id="metricRoiLabel">Total ROI</div>
+        <div class="label" id="metricRoiLabel">Total return on price (unlevered view)</div>
+      </div>
+      <div class="metric-box">
+        <div class="value" id="metricRoe">—</div>
+        <div class="label" id="metricRoeLabel">Return on equity</div>
       </div>
       <div class="metric-box">
         <div class="value" id="metricYield">—</div>
@@ -497,8 +501,14 @@
 
     document.getElementById("metricRisk").textContent = risk.risk_score !== undefined ? risk.risk_score : "N/A";
     document.getElementById("metricRoi").textContent = metrics.roi_pct !== undefined ? metrics.roi_pct + "%" : "N/A";
-    document.getElementById("metricRoiLabel").textContent =
-      metrics.horizon_years ? `Total ROI over ${metrics.horizon_years} years` : "Total ROI";
+    const years = metrics.horizon_years ? ` over ${metrics.horizon_years} years` : "";
+    document.getElementById("metricRoiLabel").textContent = `Total return on price (unlevered view)${years}`;
+    document.getElementById("metricRoe").textContent = metrics.roe_pct !== undefined ? metrics.roe_pct + "%" : "N/A";
+    const perYear =
+      metrics.roe_annualised_pct !== undefined && metrics.roe_annualised_pct !== null
+        ? ` (${metrics.roe_annualised_pct}%/yr)`
+        : "";
+    document.getElementById("metricRoeLabel").textContent = `Return on equity${years}${perYear}`;
     document.getElementById("metricYield").textContent = metrics.rental_yield_pct !== undefined ? metrics.rental_yield_pct + "%" : "N/A";
 
     // annual_cash_flow_inr is AFTER the EMI; operating_cash_flow_inr is before the loan
@@ -570,7 +580,9 @@
     document.getElementById("metricYield").textContent = "—";
     document.getElementById("metricOperatingCashFlow").textContent = "—";
     document.getElementById("metricCashFlow").textContent = "—";
-    document.getElementById("metricRoiLabel").textContent = "Total ROI";
+    document.getElementById("metricRoiLabel").textContent = "Total return on price (unlevered view)";
+    document.getElementById("metricRoe").textContent = "—";
+    document.getElementById("metricRoeLabel").textContent = "Return on equity";
     document.getElementById("evidenceList").innerHTML = "";
     document.getElementById("guardrailSection").style.display = "none";
     actionsRow.style.display = "none";

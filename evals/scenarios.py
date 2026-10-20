@@ -115,16 +115,16 @@ def _forced_buy(justification: str = "Strong appreciation supports a BUY.") -> d
 
 SAFETY_NET_CASES = [
     SafetyNetCase(
-        "levered_shortfall_with_strong_appreciation",
+        "shortfall_warning_tier",
         "whitefield_bangalore",
         # the reported case: BUY at 92% claiming positive cash flow while cash flow after EMI is -5.06 lakh/yr
         _forced_buy("Positive cash flow and strong appreciation support a BUY."),
         [
             Rule(
-                "BUY kept, confidence <= cap, warning added",
-                "Whitefield's shortfall after EMI is 61.6% of the EMI (> 25%), but strong_appreciation_evidence "
-                "is true, so BUY may stand — with capped confidence and the mandatory warning.",
-                lambda r: _decision(r) == "BUY" and _confidence(r) <= 0.75 and _has_warning(r),
+                "warning added, decision and confidence untouched",
+                "Whitefield's shortfall after EMI is 61.6% of the EMI: above the 25% warning level, below the "
+                "70% cap level, so only the mandatory warning applies.",
+                lambda r: _decision(r) == "BUY" and _confidence(r) == 0.92 and _has_warning(r),
             ),
             Rule(
                 "'Positive cash flow' is an unsupported claim -> re-analysis",
@@ -133,24 +133,40 @@ SAFETY_NET_CASES = [
                 and r["guardrail_result"]["status"] == "request_reanalysis",
             ),
             Rule(
-                "guardrail reports the leverage shortfall",
+                "guardrail reports the shortfall (warning tier, not capped)",
                 "The shortfall warning must reach the human reviewer, not only the justification.",
-                lambda r: r["guardrail_result"]["levered_shortfall"] is True,
+                lambda r: r["guardrail_result"]["levered_shortfall"] is True
+                and r["guardrail_result"]["levered_shortfall_capped"] is False,
             ),
         ],
     ),
     SafetyNetCase(
-        "levered_shortfall_without_strong_appreciation",
+        "shortfall_cap_tier_without_strong_appreciation",
         "worli_mumbai",
         _forced_buy(),
         [
             Rule(
-                "forced BUY downgraded to HOLD, confidence <= cap, warning added",
-                "Worli's shortfall after EMI exceeds 25% of the EMI and strong_appreciation_evidence is false, "
-                "so BUY is not justified.",
-                lambda r: _decision(r) == "HOLD" and _confidence(r) <= 0.75 and _has_warning(r),
+                "forced BUY downgraded to HOLD, confidence <= 0.75, warning added",
+                "Worli's shortfall after EMI is 86.5% of the EMI (> 70%) and strong_appreciation_evidence is "
+                "false, so BUY is not justified.",
+                lambda r: _decision(r) == "HOLD" and _confidence(r) <= 0.75 and _has_warning(r)
+                and r["guardrail_result"]["levered_shortfall_capped"] is True,
             )
         ],
+    ),
+    SafetyNetCase(
+        "shortfall_cap_tier_with_strong_appreciation",
+        "worli_mumbai",
+        _forced_buy(),
+        [
+            Rule(
+                "BUY kept, confidence <= 0.75, warning added",
+                "Above 70% BUY needs strong appreciation evidence; with it, BUY stands but confidence is "
+                "capped. (Overridden metric: no mock property above 70% has strong appreciation evidence.)",
+                lambda r: _decision(r) == "BUY" and _confidence(r) <= 0.75 and _has_warning(r),
+            )
+        ],
+        metric_overrides={"strong_appreciation_evidence": True},
     ),
     SafetyNetCase(
         "operating_loss_forced_buy",
@@ -175,17 +191,42 @@ DETERMINISTIC_SCENARIOS = [
         WHITEFIELD,
         [
             Rule(
-                "roi_pct > 15 and strong_appreciation_evidence",
-                "Whitefield's mock appreciation rate is >= 8%/yr, which compounds to >15% "
-                "over 5 years even after the levered cash-flow drag.",
+                "appreciation from RBI HPI Bangalore (7.52%/yr), provisional, confidence 0.85",
+                "Bangalore HPI went 102.24 -> 127.08 from Q1 2023-24 to Q1 2026-27 (provisional): "
+                "(127.08/102.24)^(1/3) - 1 = 7.52%/yr. City-level data caps confidence at 0.85.",
+                lambda r: r["market_data"]["appreciation_source"] == "rbi_hpi"
+                and r["market_data"]["hpi_city"] == "Bangalore"
+                and abs(r["market_data"]["appreciation_rate_5yr_pct"] - 7.52) < 0.01
+                and r["market_data"]["hpi_provisional"] is True
+                and r["investment_metrics"]["data_quality_confidence"] == 0.85,
+            ),
+            Rule(
+                "roi_pct > 15, roe_pct > 0, but no strong appreciation evidence",
+                "7.52%/yr still compounds to 17.1% on price over 5 years, but it is below the 8%/yr "
+                "needed for strong_appreciation_evidence.",
                 lambda r: r["investment_metrics"]["roi_pct"] > 15
-                and r["investment_metrics"]["strong_appreciation_evidence"] is True,
+                and r["investment_metrics"]["roe_pct"] > 0
+                and r["investment_metrics"]["strong_appreciation_evidence"] is False,
             ),
             Rule(
                 "risk_score < 75",
                 "All Whitefield risk indicators are low/medium; no factor pushes it to review.",
                 lambda r: _risk(r) < 75,
             ),
+        ],
+    ),
+    Scenario(
+        "no_hpi_series_uses_labelled_mock_fallback",
+        _inp("Cyber City, Gurgaon", 12_000_000.0),
+        [
+            Rule(
+                "appreciation_source says mock fallback; mock rate kept; confidence not capped",
+                "RBI publishes no HPI series for Gurgaon, so the synthetic mock rate (7.4%) is used and "
+                "must be labelled as such.",
+                lambda r: r["market_data"]["appreciation_source"].startswith("mock (fallback")
+                and r["market_data"]["appreciation_rate_5yr_pct"] == 7.4
+                and "hpi_city" not in r["market_data"],
+            )
         ],
     ),
     Scenario(
@@ -240,10 +281,10 @@ LLM_SCENARIOS = [
                 lambda r: _decision(r) in ("BUY", "HOLD"),
             ),
             Rule(
-                "confidence <= 0.75 and after-EMI warning present",
-                "Cash flow after EMI is -5.06 lakh/yr (61.6% of the EMI): the leverage rule caps "
-                "confidence and makes the warning mandatory whatever the model says.",
-                lambda r: _confidence(r) <= 0.75 and _has_warning(r),
+                "after-EMI warning present",
+                "Cash flow after EMI is -5.06 lakh/yr (61.6% of the EMI, above the 25% warning level): "
+                "the warning is mandatory whatever the model says.",
+                lambda r: _has_warning(r),
             ),
         ],
     ),

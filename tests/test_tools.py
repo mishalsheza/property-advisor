@@ -136,3 +136,34 @@ def test_loan_inputs_default_and_flow_into_metrics():
     for bad in ({"loan_to_value_pct": 95}, {"interest_rate_pct": 0}, {"loan_tenure_years": 40}):
         with pytest.raises(ValidationError):
             PropertyState(property_address="x", budget=1, **bad)
+
+
+def test_outstanding_balance_matches_month_by_month_amortisation():
+    from property_advisor.tools.financial_calculator import calculate_outstanding_balance
+
+    principal, rate, emi = 7_600_000, 9.0, calculate_emi(7_600_000, 9.0, 20)
+    balance = principal
+    for _ in range(60):
+        balance = balance * (1 + 0.09 / 12) - emi
+    assert abs(calculate_outstanding_balance(principal, rate, emi, 60) - balance) < 1
+
+
+def test_return_on_equity_for_whitefield_hand_checked():
+    # equity = 20% down (19.0L) + 6% stamp duty & registration (5.7L) = 24.7L;
+    # principal repaid over 60 EMIs ~ 8.58L; gain = 52.52L appreciation - 25.28L
+    # cash flow after EMI + 8.58L principal = 35.82L -> 145.0% (19.6%/yr)
+    property_data = get_property_data("Whitefield, Bangalore")
+    market_data = get_market_data("Bangalore", "Whitefield", slug="whitefield_bangalore")
+    m = compute_investment_metrics(property_data, market_data, budget=9_500_000, horizon_years=5)
+    assert m["equity_invested_inr"] == 2_470_000
+    assert abs(m["principal_repaid_inr"] - 858_264) < 1
+    assert m["roe_pct"] == 145.02
+    assert m["roe_annualised_pct"] == 19.63
+    assert m["roi_pct"] == 28.67  # total return on price is unchanged
+
+
+def test_annualised_return_undefined_for_total_loss():
+    from property_advisor.tools.financial_calculator import calculate_annualised_return
+
+    assert calculate_annualised_return(-100, 5) is None
+    assert calculate_annualised_return(21, 2) == 10.0

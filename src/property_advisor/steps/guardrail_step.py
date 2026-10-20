@@ -28,7 +28,8 @@ from langsmith import traceable
 
 from property_advisor.config import (
     GUARDRAIL_CONFIDENCE_THRESHOLD,
-    LEVERED_SHORTFALL_PCT_OF_EMI,
+    LEVERED_SHORTFALL_CAP_PCT_OF_EMI,
+    LEVERED_SHORTFALL_WARN_PCT_OF_EMI,
     MAX_REANALYSIS_RETRIES,
     RISK_HUMAN_REVIEW_THRESHOLD,
 )
@@ -136,6 +137,17 @@ def check_claims(state: PropertyState) -> list[dict[str, Any]]:
     return unsupported
 
 
+def _appreciation_source_note(market: dict) -> str:
+    rate = market.get("appreciation_rate_5yr_pct")
+    if market.get("appreciation_source") == "rbi_hpi":
+        provisional = " — includes PROVISIONAL quarters, may be revised" if market.get("hpi_provisional") else ""
+        return (
+            f"Appreciation rate {rate}%/yr is from the RBI House Price Index for {market.get('hpi_city')} "
+            f"({market.get('hpi_window')}): city-level, not locality-specific{provisional}."
+        )
+    return f"Appreciation rate {rate}%/yr is SYNTHETIC mock data ({market.get('appreciation_source', 'mock')})."
+
+
 @timed_node("guardrail_step")
 def guardrail_step(state: PropertyState) -> dict:
     reasons: list[str] = []
@@ -146,6 +158,8 @@ def guardrail_step(state: PropertyState) -> dict:
         reasons.append("Property data is missing for this address (data retries exhausted).")
     if missing_market_data:
         reasons.append("Market trend data is missing for this locality (data-quality risk).")
+    else:
+        reasons.append(_appreciation_source_note(state.market_data))
 
     risk_score = state.risk_assessment.get("risk_score", 0)
     high_risk = risk_score > RISK_HUMAN_REVIEW_THRESHOLD
@@ -160,12 +174,20 @@ def guardrail_step(state: PropertyState) -> dict:
         )
 
     shortfall_pct = float(metrics.get("shortfall_pct_of_emi") or 0)
-    levered_shortfall = bool(metrics.get("levered_cash_flow_negative")) and shortfall_pct > LEVERED_SHORTFALL_PCT_OF_EMI
+    levered_negative = bool(metrics.get("levered_cash_flow_negative"))
+    levered_shortfall = levered_negative and shortfall_pct > LEVERED_SHORTFALL_WARN_PCT_OF_EMI
+    levered_shortfall_capped = levered_negative and shortfall_pct > LEVERED_SHORTFALL_CAP_PCT_OF_EMI
     if levered_shortfall:
+        consequence = (
+            f"above the {LEVERED_SHORTFALL_CAP_PCT_OF_EMI:g}% limit, so confidence is capped and BUY needs strong "
+            f"appreciation evidence"
+            if levered_shortfall_capped
+            else f"above the {LEVERED_SHORTFALL_WARN_PCT_OF_EMI:g}% warning level"
+        )
         reasons.append(
             f"Cash flow after EMI is negative (INR {metrics.get('cash_flow_after_emi_inr'):,.0f} per year; "
             f"monthly shortfall INR {metrics.get('monthly_shortfall_after_emi_inr'):,.0f} = {shortfall_pct:g}% of the EMI, "
-            f"above the {LEVERED_SHORTFALL_PCT_OF_EMI:g}% limit): confidence capped, BUY needs strong appreciation evidence."
+            f"{consequence})."
         )
 
     confidence = state.recommendation.get("confidence_score", 0.0)
@@ -221,6 +243,7 @@ def guardrail_step(state: PropertyState) -> dict:
         "high_risk": high_risk,
         "negative_cash_flow": negative_cash_flow,
         "levered_shortfall": levered_shortfall,
+        "levered_shortfall_capped": levered_shortfall_capped,
         "confidence_below_threshold": confidence_below_threshold,
         "conflicting_evidence": conflicting_evidence,
         "conflict_check": "enabled" if CONFLICT_CHECK_ENABLED else "disabled",

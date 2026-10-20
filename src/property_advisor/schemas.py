@@ -16,6 +16,10 @@ from pydantic import BaseModel, Field
 # value against this; any metric not listed here counts as unsupported.
 EVIDENCE_METRIC_FIELDS: dict[str, tuple[str, str]] = {
     "roi_pct": ("investment_metrics", "roi_pct"),
+    "roe_pct": ("investment_metrics", "roe_pct"),
+    "roe_annualised_pct": ("investment_metrics", "roe_annualised_pct"),
+    "equity_invested_inr": ("investment_metrics", "equity_invested_inr"),
+    "principal_repaid_inr": ("investment_metrics", "principal_repaid_inr"),
     "rental_yield_pct": ("investment_metrics", "rental_yield_pct"),
     "cap_rate_pct": ("investment_metrics", "cap_rate_pct"),
     "operating_cash_flow_inr": ("investment_metrics", "operating_cash_flow_inr"),

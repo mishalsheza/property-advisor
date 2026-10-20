@@ -6,6 +6,7 @@ calculations in INR. Financial calculations must be deterministic.
 
 from __future__ import annotations
 
+from property_advisor.config import STAMP_DUTY_REGISTRATION_PCT
 from property_advisor.logging_utils import timed_node
 from property_advisor.state import PropertyState
 from property_advisor.tools.financial_calculator import compute_investment_metrics
@@ -21,5 +22,6 @@ def financial_calc_step(state: PropertyState) -> dict:
         loan_to_value_ratio=state.loan_to_value_pct / 100,
         interest_rate_pct=state.interest_rate_pct,
         loan_tenure_years=state.loan_tenure_years,
+        stamp_duty_registration_pct=STAMP_DUTY_REGISTRATION_PCT,
     )
     return {"investment_metrics": metrics}

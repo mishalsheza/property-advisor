@@ -7,9 +7,10 @@ and a confidence score. The prompt explicitly grounds the model in the
 already-computed numbers so it cannot invent its own financial figures.
 
 Cash-flow safety net: negative cash flow must never be silently waved
-through into a BUY. Operating losses (rental strategy) and large shortfalls
-after EMI (any strategy) force a downgrade unless appreciation evidence is
-strong, the latter also caps confidence and always adds a warning. The prompt tells
+through into a BUY. An operating loss (rental strategy) forces a downgrade
+unless appreciation evidence is strong. A shortfall after EMI (any strategy)
+carries a mandatory warning above one threshold and, above a higher one, a
+confidence cap plus the same downgrade rule. The prompt tells
 the model the rules, and a deterministic post-processing step enforces them
 regardless of what the model actually outputs — financial decision rules are
 not left to LLM discretion alone, consistent with this project's preference
@@ -26,8 +27,9 @@ from __future__ import annotations
 import json
 
 from property_advisor.config import (
+    LEVERED_SHORTFALL_CAP_PCT_OF_EMI,
     LEVERED_SHORTFALL_CONFIDENCE_CAP,
-    LEVERED_SHORTFALL_PCT_OF_EMI,
+    LEVERED_SHORTFALL_WARN_PCT_OF_EMI,
     get_llm,
 )
 from property_advisor.logging_utils import timed_node
@@ -44,8 +46,16 @@ SYSTEM_PROMPT = """Indian real-estate Recommendation Agent. Output BUY, HOLD, or
 
 Decide from the WHOLE picture, never a single metric. Use ONLY the numbers \
 given below; never invent figures. Weigh together:
-- Total return: roi_pct is the TOTAL ROI over roi_horizon_years (appreciation \
-plus cash flow after EMI, divided by price) and the market appreciation rate.
+- Total return: roi_pct is the total return ON PRICE over roi_horizon_years \
+(appreciation plus cash flow after EMI, divided by price). roe_pct is the return \
+ON THE BUYER'S EQUITY over the same years (equity_invested_inr = down payment + \
+stamp duty & registration; gain also counts loan principal repaid), and \
+roe_annualised_pct its compound yearly rate. Weigh both with the market \
+appreciation rate.
+- Appreciation: Market.appreciation_rate_5yr_pct is an annual rate. \
+appreciation_source "rbi_hpi" means city-level RBI House Price Index growth \
+(hpi_provisional=true: latest quarter provisional); otherwise it is a synthetic \
+fallback. Say which when you rely on it.
 - Income: rental_yield_pct; operating_cash_flow_inr (rent minus expenses, BEFORE \
 the loan; cash_flow_severity describes this figure); cash_flow_after_emi_inr \
 (what the buyer actually nets AFTER paying the EMI).
@@ -74,7 +84,7 @@ Financing caveat: cash_flow_after_emi_inr < 0 means the EMI (at the Loan \
 terms given below) exceeds net rent and the buyer must fund the shortfall. \
 This is common for Indian rentals (appreciation, not monthly cash flow, drives \
 most returns): mention it -- it does NOT by itself justify AVOID. When \
-shortfall_pct_of_emi > """ + f"{LEVERED_SHORTFALL_PCT_OF_EMI:g}" + """, BUY additionally \
+shortfall_pct_of_emi > """ + f"{LEVERED_SHORTFALL_CAP_PCT_OF_EMI:g}" + """, BUY additionally \
 requires strong_appreciation_evidence=true and confidence is capped at \
 """ + f"{LEVERED_SHORTFALL_CONFIDENCE_CAP:g}" + """.
 
@@ -109,6 +119,9 @@ def _format_rag_context(rag_context: list[dict], limit: int = 3, snippet_len: in
 def _compact_metrics(metrics: dict) -> dict:
     keys = (
         "roi_pct",
+        "roe_pct",
+        "roe_annualised_pct",
+        "equity_invested_inr",
         "rental_yield_pct",
         "cap_rate_pct",
         "operating_cash_flow_inr",
@@ -165,7 +178,8 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
     strong_appreciation = bool(metrics.get("strong_appreciation_evidence"))
     levered_negative = bool(metrics.get("levered_cash_flow_negative"))
     shortfall_pct = float(metrics.get("shortfall_pct_of_emi") or 0)
-    heavy_shortfall = levered_negative and shortfall_pct > LEVERED_SHORTFALL_PCT_OF_EMI
+    warn_shortfall = levered_negative and shortfall_pct > LEVERED_SHORTFALL_WARN_PCT_OF_EMI
+    heavy_shortfall = levered_negative and shortfall_pct > LEVERED_SHORTFALL_CAP_PCT_OF_EMI
 
     decision = result.decision
     confidence = result.confidence_score
@@ -184,8 +198,8 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
         )
 
     if heavy_shortfall:
-        # Leverage rule: a large monthly shortfall after EMI caps confidence,
-        # always carries a warning, and BUY must rest on strong appreciation.
+        # Leverage rule, upper tier: a very large monthly shortfall after EMI
+        # caps confidence and BUY must rest on strong appreciation.
         if decision == "BUY" and not strong_appreciation:
             decision = "HOLD"
             justification = (
@@ -195,9 +209,10 @@ def _enforce_cashflow_safety_net(result: RecommendationOutput, state: PropertySt
             )
         confidence = round(min(confidence, LEVERED_SHORTFALL_CONFIDENCE_CAP), 2)
 
-    if levered_negative:
-        # Mandatory, regardless of how the model worded its justification (the
-        # old version skipped this whenever the text merely said "cash flow").
+    if warn_shortfall:
+        # Leverage rule, lower tier: the warning is mandatory, regardless of how
+        # the model worded its justification (an earlier version skipped it
+        # whenever the text merely said "cash flow").
         justification = f"{justification} {cash_flow_warning(state)}"
 
     return RecommendationOutput(

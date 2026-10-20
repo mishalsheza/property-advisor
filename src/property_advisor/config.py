@@ -40,9 +40,19 @@ RAG_CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "800"))
 RAG_CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "100"))
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
 
-# Leverage rule: when the monthly shortfall after EMI exceeds this % of the EMI,
-# confidence is capped, a warning is mandatory, and BUY needs strong appreciation evidence.
-LEVERED_SHORTFALL_PCT_OF_EMI = float(os.getenv("LEVERED_SHORTFALL_PCT_OF_EMI", "25"))
+# Appreciation from the RBI House Price Index (base 2022-23): annualised over the
+# last N quarters; HPI is city-level, so data quality confidence is capped.
+HPI_WINDOW_QUARTERS = int(os.getenv("HPI_WINDOW_QUARTERS", "12"))
+HPI_CITY_LEVEL_CONFIDENCE = float(os.getenv("HPI_CITY_LEVEL_CONFIDENCE", "0.85"))
+
+# Stamp duty + registration as % of price, paid from the buyer's equity (return on equity).
+STAMP_DUTY_REGISTRATION_PCT = float(os.getenv("STAMP_DUTY_REGISTRATION_PCT", "6"))
+
+# Leverage rule, by monthly shortfall after EMI as a % of the EMI:
+# above WARN -> the after-EMI warning is mandatory;
+# above CAP  -> also cap confidence and require strong appreciation evidence for BUY.
+LEVERED_SHORTFALL_WARN_PCT_OF_EMI = float(os.getenv("LEVERED_SHORTFALL_WARN_PCT_OF_EMI", "25"))
+LEVERED_SHORTFALL_CAP_PCT_OF_EMI = float(os.getenv("LEVERED_SHORTFALL_CAP_PCT_OF_EMI", "70"))
 LEVERED_SHORTFALL_CONFIDENCE_CAP = float(os.getenv("LEVERED_SHORTFALL_CONFIDENCE_CAP", "0.75"))
 
 MAX_DATA_RETRIES = int(os.getenv("MAX_DATA_RETRIES", "2"))

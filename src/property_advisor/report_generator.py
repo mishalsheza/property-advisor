@@ -51,6 +51,13 @@ def _fmt_inr(value: Any) -> str:
         return str(value)
 
 
+def _fmt_appreciation_source(market: dict[str, Any]) -> str:
+    if market.get("appreciation_source") == "rbi_hpi":
+        provisional = ", provisional" if market.get("hpi_provisional") else ""
+        return f"RBI HPI, {market.get('hpi_city')} (city-level), {market.get('hpi_window')}{provisional}"
+    return f"synthetic mock data — {market.get('appreciation_source', 'mock')}"
+
+
 def _fmt_loan(loan: dict[str, Any]) -> str:
     if not loan:
         return "N/A"
@@ -112,14 +119,18 @@ def _render_markdown(report: dict[str, Any], generated_at: str) -> str:
         f"- Amenities: {', '.join(property_data.get('amenities', [])) or 'N/A'}",
         "",
         "## Market Summary",
-        f"- 5yr appreciation rate: {market_data.get('appreciation_rate_5yr_pct', 'N/A')}%",
+        f"- Appreciation rate: {market_data.get('appreciation_rate_5yr_pct', 'N/A')}%/yr — {_fmt_appreciation_source(market_data)}",
         f"- Demand index: {market_data.get('demand_index', 'N/A')} / Supply index: {market_data.get('supply_index', 'N/A')}",
         f"- Avg rental yield: {market_data.get('rental_yield_avg_pct', 'N/A')}%",
         f"- RERA-registered projects: {market_data.get('rera_registered_projects_pct', 'N/A')}%",
         "" if market_data else "_No market data was available for this locality._",
         "",
         "## Financial Metrics",
-        f"- Total ROI over {metrics.get('horizon_years', 'N/A')} years: {metrics.get('roi_pct', 'N/A')}%",
+        f"- Total return on price (unlevered view) over {metrics.get('horizon_years', 'N/A')} years: {metrics.get('roi_pct', 'N/A')}%",
+        f"- Return on equity over {metrics.get('horizon_years', 'N/A')} years: {metrics.get('roe_pct', 'N/A')}% "
+        f"({metrics.get('roe_annualised_pct', 'N/A')}%/yr) on equity of {_fmt_inr(metrics.get('equity_invested_inr', 'N/A'))} "
+        f"(down payment {_fmt_inr(metrics.get('down_payment_inr', 'N/A'))} + stamp duty & registration "
+        f"{_fmt_inr(metrics.get('stamp_duty_registration_inr', 'N/A'))}; principal repaid {_fmt_inr(metrics.get('principal_repaid_inr', 'N/A'))})",
         f"- Rental yield: {metrics.get('rental_yield_pct', 'N/A')}%",
         f"- Cap rate: {metrics.get('cap_rate_pct', 'N/A')}%",
         f"- Operating cash flow (before loan), per year: {_fmt_inr(metrics.get('operating_cash_flow_inr', 'N/A'))}",
@@ -235,7 +246,7 @@ def _write_pdf(report: dict[str, Any], path: str, generated_at: str) -> None:
         Paragraph("Market Summary", h2),
         _kv_table(
             [
-                ("5yr appreciation rate", f"{market_data.get('appreciation_rate_5yr_pct', 'N/A')}%"),
+                ("Appreciation rate", f"{market_data.get('appreciation_rate_5yr_pct', 'N/A')}%/yr — {_fmt_appreciation_source(market_data)}"),
                 ("Demand / Supply index", f"{market_data.get('demand_index', 'N/A')} / {market_data.get('supply_index', 'N/A')}"),
                 ("Avg rental yield", f"{market_data.get('rental_yield_avg_pct', 'N/A')}%"),
                 ("RERA-registered projects", f"{market_data.get('rera_registered_projects_pct', 'N/A')}%"),
@@ -246,7 +257,12 @@ def _write_pdf(report: dict[str, Any], path: str, generated_at: str) -> None:
         Paragraph("Financial Metrics", h2),
         _kv_table(
             [
-                (f"Total ROI over {metrics.get('horizon_years', 'N/A')} years", f"{metrics.get('roi_pct', 'N/A')}%"),
+                (f"Total return on price (unlevered view) over {metrics.get('horizon_years', 'N/A')} years", f"{metrics.get('roi_pct', 'N/A')}%"),
+                (
+                    f"Return on equity over {metrics.get('horizon_years', 'N/A')} years",
+                    f"{metrics.get('roe_pct', 'N/A')}% ({metrics.get('roe_annualised_pct', 'N/A')}%/yr) on equity of "
+                    f"{_fmt_inr(metrics.get('equity_invested_inr', 'N/A'))}",
+                ),
                 ("Rental yield", f"{metrics.get('rental_yield_pct', 'N/A')}%"),
                 ("Cap rate", f"{metrics.get('cap_rate_pct', 'N/A')}%"),
                 ("Operating cash flow (before loan), per year", _fmt_inr(metrics.get("operating_cash_flow_inr", "N/A"))),
